@@ -469,9 +469,9 @@ export default function CustomObjectsPage() {
     <SoftwareLayout pageTitle="Custom Objects">
       <div className="space-y-4">
         {/* 1. Hero Banner matching design mockup */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-purple-50/20 to-purple-100/30 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-60 h-60 rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-2xl" />
+            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
           </div>
 
           <div className="relative z-10">
@@ -483,8 +483,8 @@ export default function CustomObjectsPage() {
             </p>
           </div>
 
-          <div className="relative z-10 bg-white/95 backdrop-blur-xs rounded-[8px] border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
+          <div className="relative z-10 bg-white rounded-[8px] border border-purple-100/90 p-3 sm:p-3.5 shadow-sm flex items-center gap-4 shrink-0">
+            <div className="w-10 h-10 rounded-[6px] bg-[#f4ecfc] text-[#6024a8] flex items-center justify-center shrink-0">
               <BarChart2 size={18} />
             </div>
             <div>
@@ -506,13 +506,13 @@ export default function CustomObjectsPage() {
 
         <div className="flex flex-col lg:flex-row gap-5 items-start">
           {/* 1. Left Sub-Sidebar (Desktop: 220px, Mobile: Full Width) */}
-          <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[6px] border border-slate-200/80 p-3 shadow-2xs">
+          <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[8px] border border-slate-200/90 p-3 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)]">
             <div className="px-2 pt-1 pb-2 border-b border-slate-100 mb-2 flex items-center justify-between">
               <span className="text-[10px] font-medium tracking-[0.14em] text-slate-400 uppercase">
                 Entities
               </span>
-            <SlidersHorizontal size={12} className="text-slate-400" />
-          </div>
+              <SlidersHorizontal size={12} className="text-slate-400" />
+            </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-1">
             {ENTITIES.map((entity) => {
@@ -570,7 +570,7 @@ export default function CustomObjectsPage() {
         {/* 2. Main Content Workspace */}
         <div className="flex-1 w-full min-w-0 space-y-4">
           {/* Top Control Bar */}
-          <div className="bg-white rounded-[6px] border border-slate-200/80 p-3.5 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="bg-white rounded-[8px] border border-slate-200/90 p-3.5 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
                 {currentEntityConfig.icon}
@@ -608,7 +608,7 @@ export default function CustomObjectsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search attributes..."
-                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f4f2f8] border border-slate-200/80 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-1 focus:ring-[#6024a8]/20 transition-all font-normal"
                   />
                 </div>
               )}

@@ -62,18 +62,18 @@ export default function ResponsiveDataList<T extends { id: string }>({
   }
 
   return (
-    <div className="w-full bg-white rounded-[6px] border border-slate-200/80 shadow-2xs overflow-hidden">
+    <div className="w-full bg-white rounded-[8px] border border-slate-200/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.05),0_2px_4px_-1px_rgba(0,0,0,0.03)] overflow-hidden">
       {/* 1. Integrated Top Toolbar */}
       {topToolbar && (
-        <div className="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white">
+        <div className="p-3.5 sm:p-4 border-b border-slate-200/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-gradient-to-r from-white via-[#fcfaff] to-white">
           {topToolbar}
         </div>
       )}
 
       {/* 2. Empty State Handling */}
       {items.length === 0 ? (
-        <div className="p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-[6px] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-3 shadow-2xs">
+        <div className="p-12 flex flex-col items-center justify-center text-center bg-white">
+          <div className="w-12 h-12 rounded-[6px] bg-purple-50/70 border border-purple-100 flex items-center justify-center text-[#6024a8] mb-3 shadow-2xs">
             <Inbox size={22} />
           </div>
           <h3 className="text-[14px] font-medium text-slate-800">{emptyTitle}</h3>
@@ -106,13 +106,13 @@ export default function ResponsiveDataList<T extends { id: string }>({
                     ))}
                   </colgroup>
                   <thead>
-                    <tr className="border-b border-slate-100 bg-[#f8fafc]">
+                    <tr className="border-b border-slate-200/80 bg-[#f7f5fa]">
                       {columns.map((col) => (
                         <th
                           key={col.key}
                           style={col.width ? { width: col.width, minWidth: col.width } : undefined}
                           title={col.header}
-                          className={`h-[38px] px-3.5 sm:px-4 text-[10.5px] font-medium text-slate-400 uppercase tracking-wider select-none truncate ${
+                          className={`h-[38px] px-3.5 sm:px-4 text-[10.5px] font-semibold text-slate-500 uppercase tracking-wider select-none truncate ${
                             col.className || ""
                           }`}
                         >
@@ -121,12 +121,12 @@ export default function ResponsiveDataList<T extends { id: string }>({
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100/90 bg-white">
                     {currentItems.map((item) => (
                       <React.Fragment key={item.id}>
                         <tr
-                          className={`hover:bg-[#fbfafd] transition-colors h-[50px] text-[12.5px] text-slate-700 ${
-                            expandedRowId === item.id ? "bg-purple-50/25 font-medium" : ""
+                          className={`hover:bg-[#fbf9fe] transition-colors h-[50px] text-[12.5px] text-slate-700 ${
+                            expandedRowId === item.id ? "bg-purple-50/30 font-medium" : ""
                           }`}
                         >
                           {columns.map((col) => (
@@ -152,7 +152,7 @@ export default function ResponsiveDataList<T extends { id: string }>({
                           ))}
                         </tr>
                         {expandedRowId === item.id && renderExpandedRow && (
-                          <tr className="bg-slate-50/70 border-b border-purple-100">
+                          <tr className="bg-[#fbfafd] border-b border-purple-100">
                             <td colSpan={columns.length} className="px-5 py-4 max-w-none">
                               {renderExpandedRow(item)}
                             </td>
@@ -167,14 +167,14 @@ export default function ResponsiveDataList<T extends { id: string }>({
           })()}
 
           {/* 4. Mobile Card Layout (below md) */}
-          <div className="md:hidden p-0 space-y-3 bg-[#fafafc]">
+          <div className="md:hidden p-3.5 space-y-3 bg-[#f4f2f8]">
             {currentItems.map((item) =>
               renderMobileCard ? (
                 <div key={item.id}>{renderMobileCard(item)}</div>
               ) : (
                 <div
                   key={item.id}
-                  className="p-3.5 mb-2 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-1.5 text-[12px]"
+                  className="p-3.5 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-1.5 text-[12px]"
                 >
                   {columns.map((col) => (
                     <div key={col.key} className="flex justify-between items-center py-0.5">
@@ -190,7 +190,7 @@ export default function ResponsiveDataList<T extends { id: string }>({
           </div>
 
           {/* 5. Pagination Controls Footer */}
-          <div className="border-t border-slate-100 px-4 py-3 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-500">
+          <div className="border-t border-slate-200/80 px-4 py-3 bg-[#fbfafd] flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-slate-500">
             <div>
               Showing <span className="font-medium text-slate-800">{startIndex + 1}</span> to{" "}
               <span className="font-medium text-slate-800">

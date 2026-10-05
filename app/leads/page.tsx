@@ -643,7 +643,7 @@ export default function LeadsPage() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search leads..."
-          className="w-full h-[34px] max-h-[34px] pl-8.5 pr-3 bg-[#f8fafc] border border-slate-200/90 rounded-[6px] text-[12px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-1 focus:ring-[#6024a8]/20 transition-all font-normal"
+          className="w-full h-[34px] max-h-[34px] pl-8.5 pr-3 bg-[#f4f2f8] border border-slate-200/80 rounded-[6px] text-[12px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-1 focus:ring-[#6024a8]/20 transition-all font-normal"
         />
       </div>
 
@@ -653,7 +653,7 @@ export default function LeadsPage() {
           <button
             type="button"
             onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
-            className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200/90 bg-[#fbfafd] hover:bg-slate-100/70 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
           >
             <SlidersHorizontal size={13} className="text-slate-500" />
             <span>Columns</span>
@@ -715,21 +715,21 @@ export default function LeadsPage() {
     <SoftwareLayout pageTitle="Leads">
       <div className="space-y-4">
         {/* 1. Hero Banner matching design mockup */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-purple-50/20 to-purple-100/30 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
           {/* Subtle Ambient Glow and User Silhouette SVGs */}
           <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-60 h-60 rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-2xl" />
+            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
             <svg
-              className="absolute right-6 bottom-1 h-32 w-60 text-purple-200/40"
+              className="absolute right-6 bottom-1 h-32 w-60 text-purple-300/50"
               viewBox="0 0 200 120"
               fill="currentColor"
             >
-              <circle cx="140" cy="40" r="18" fill="currentColor" opacity="0.35" />
-              <path d="M115 85 C115 65 165 65 165 85 Z" fill="currentColor" opacity="0.35" />
-              <circle cx="105" cy="50" r="16" fill="currentColor" opacity="0.45" />
-              <path d="M80 95 C80 75 130 75 130 95 Z" fill="currentColor" opacity="0.45" />
-              <circle cx="160" cy="55" r="14" fill="currentColor" opacity="0.3" />
-              <path d="M140 100 C140 82 180 82 180 100 Z" fill="currentColor" opacity="0.3" />
+              <circle cx="140" cy="40" r="18" fill="currentColor" opacity="0.4" />
+              <path d="M115 85 C115 65 165 65 165 85 Z" fill="currentColor" opacity="0.4" />
+              <circle cx="105" cy="50" r="16" fill="currentColor" opacity="0.5" />
+              <path d="M80 95 C80 75 130 75 130 95 Z" fill="currentColor" opacity="0.5" />
+              <circle cx="160" cy="55" r="14" fill="currentColor" opacity="0.35" />
+              <path d="M140 100 C140 82 180 82 180 100 Z" fill="currentColor" opacity="0.35" />
             </svg>
           </div>
 
@@ -744,8 +744,8 @@ export default function LeadsPage() {
           </div>
 
           {/* Right Floating KPI Stat Card */}
-          <div className="relative z-10 bg-white/95 backdrop-blur-xs rounded-[8px] border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
+          <div className="relative z-10 bg-white rounded-[8px] border border-purple-100/90 p-3 sm:p-3.5 shadow-sm flex items-center gap-4 shrink-0">
+            <div className="w-10 h-10 rounded-[6px] bg-[#f4ecfc] text-[#6024a8] flex items-center justify-center shrink-0">
               <BarChart2 size={18} />
             </div>
             <div>

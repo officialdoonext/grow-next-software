@@ -12,9 +12,9 @@ export default function IntegrationsPage() {
     <SoftwareLayout pageTitle="Integrations">
       <div className="space-y-4">
         {/* 1. Hero Banner */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-purple-50/20 to-purple-100/30 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-60 h-60 rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-2xl" />
+            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
           </div>
 
           <div className="relative z-10">
@@ -26,8 +26,8 @@ export default function IntegrationsPage() {
             </p>
           </div>
 
-          <div className="relative z-10 bg-white/95 backdrop-blur-xs rounded-[8px] border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
+          <div className="relative z-10 bg-white rounded-[8px] border border-purple-100/90 p-3 sm:p-3.5 shadow-sm flex items-center gap-4 shrink-0">
+            <div className="w-10 h-10 rounded-[6px] bg-[#f4ecfc] text-[#6024a8] flex items-center justify-center shrink-0">
               <Layers size={18} />
             </div>
             <div>
@@ -41,7 +41,7 @@ export default function IntegrationsPage() {
 
         <div className="flex flex-col lg:flex-row gap-5 items-start">
         {/* 1. Integrations Inner Sub-Sidebar (Desktop: 220px, Mobile: Full Width) */}
-        <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[6px] border border-slate-200/80 p-3 shadow-2xs">
+        <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[8px] border border-slate-200/90 p-3 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)]">
           <div className="px-2 pt-1 pb-2 border-b border-slate-100 mb-2">
             <span className="text-[10px] font-medium tracking-[0.14em] text-slate-400 uppercase">
               Integrations

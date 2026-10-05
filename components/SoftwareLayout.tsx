@@ -173,9 +173,9 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
 
   // Sidebar Component content
   const sidebarContent = (
-    <div className="relative flex flex-col h-full justify-between bg-white select-none overflow-hidden">
+    <div className="relative flex flex-col h-full justify-between bg-[#fbfafd] select-none overflow-hidden">
       {/* Ambient Bottom-Left Purple Glow */}
-      <div className="absolute -bottom-16 -left-16 w-52 h-52 rounded-full bg-gradient-to-tr from-purple-200/35 via-purple-100/20 to-transparent blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-gradient-to-tr from-purple-300/40 via-purple-200/25 to-transparent blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
         {/* Brand / Logo Section */}
@@ -278,9 +278,9 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
   );
 
   return (
-    <div className="min-h-screen bg-[#fafafc] flex font-sans text-slate-800 antialiased">
+    <div className="min-h-screen bg-[#f4f2f8] bg-[radial-gradient(ellipse_100%_65%_at_50%_-12%,rgba(96,36,168,0.06),transparent_70%)] flex font-sans text-slate-800 antialiased">
       {/* 1. Desktop Left Sidebar (Fixed) */}
-      <aside className="hidden md:flex flex-col w-[240px] shrink-0 border-r border-slate-200/80 fixed top-0 bottom-0 left-0 z-30">
+      <aside className="hidden md:flex flex-col w-[240px] shrink-0 border-r border-slate-200/90 fixed top-0 bottom-0 left-0 z-30 shadow-[1px_0_4px_rgba(96,36,168,0.02)]">
         {sidebarContent}
       </aside>
 
