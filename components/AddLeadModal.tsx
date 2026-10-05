@@ -6,12 +6,14 @@ import { CustomAttribute } from "./AddCustomAttributeModal";
 
 interface AddLeadModalProps {
   isOpen: boolean;
+  leadToEdit?: any | null;
   onClose: () => void;
-  onSuccess: (newLead: any) => void;
+  onSuccess: (savedLead: any) => void;
 }
 
 export default function AddLeadModal({
   isOpen,
+  leadToEdit,
   onClose,
   onSuccess,
 }: AddLeadModalProps) {
@@ -29,6 +31,8 @@ export default function AddLeadModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isEditing = Boolean(leadToEdit);
+
   // Fetch custom attributes for "leads" when modal opens
   useEffect(() => {
     if (!isOpen) return;
@@ -44,20 +48,54 @@ export default function AddLeadModal({
         const data = await res.json();
 
         if (isMounted && data.success && Array.isArray(data.attributes)) {
-          setCustomAttributes(data.attributes);
-
-          // Initialize custom values with default values from attributes schema
-          const initialVals: Record<string, any> = {};
-          data.attributes.forEach((attr: CustomAttribute) => {
-            if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
-              initialVals[attr.key] = attr.defaultValue;
-            } else if (attr.dataType === "Boolean") {
-              initialVals[attr.key] = false;
-            } else {
-              initialVals[attr.key] = "";
-            }
+          // Sort strictly by order ascending
+          const sorted = [...(data.attributes as CustomAttribute[])].sort((a, b) => {
+            const orderA = typeof a.order === "number" ? a.order : 999999;
+            const orderB = typeof b.order === "number" ? b.order : 999999;
+            if (orderA !== orderB) return orderA - orderB;
+            return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
           });
-          setCustomValues(initialVals);
+          setCustomAttributes(sorted);
+
+          // If editing existing lead, populate values
+          if (leadToEdit) {
+            setCustomerName(leadToEdit.customerName || "");
+            setBusinessName(leadToEdit.businessName || "");
+            setMobile(leadToEdit.mobile || "");
+            setEmail(leadToEdit.email || "");
+
+            const initialVals: Record<string, any> = {};
+            sorted.forEach((attr: CustomAttribute) => {
+              if (leadToEdit.customAttributes && leadToEdit.customAttributes[attr.key] !== undefined) {
+                initialVals[attr.key] = leadToEdit.customAttributes[attr.key];
+              } else if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
+                initialVals[attr.key] = attr.defaultValue;
+              } else if (attr.dataType === "Boolean") {
+                initialVals[attr.key] = false;
+              } else {
+                initialVals[attr.key] = "";
+              }
+            });
+            setCustomValues(initialVals);
+          } else {
+            // New Lead creation: reset form
+            setCustomerName("");
+            setBusinessName("");
+            setMobile("");
+            setEmail("");
+
+            const initialVals: Record<string, any> = {};
+            sorted.forEach((attr: CustomAttribute) => {
+              if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
+                initialVals[attr.key] = attr.defaultValue;
+              } else if (attr.dataType === "Boolean") {
+                initialVals[attr.key] = false;
+              } else {
+                initialVals[attr.key] = "";
+              }
+            });
+            setCustomValues(initialVals);
+          }
         }
       } catch (err) {
         console.warn("[Error fetching lead custom attributes]", err);
@@ -71,7 +109,7 @@ export default function AddLeadModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen]);
+  }, [isOpen, leadToEdit]);
 
   if (!isOpen) return null;
 
@@ -117,33 +155,56 @@ export default function AddLeadModal({
       const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
       const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
 
-      const res = await fetch(`/api/leads${query}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customerName: customerName.trim(),
-          businessName: businessName.trim(),
-          mobile: mobile.trim(),
-          email: email.trim(),
-          customAttributes: customValues,
-        }),
-      });
+      if (isEditing && leadToEdit) {
+        // PATCH existing lead
+        const res = await fetch(`/api/leads${query}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: leadToEdit.id,
+            customerName: customerName.trim(),
+            businessName: businessName.trim(),
+            mobile: mobile.trim(),
+            email: email.trim(),
+            customAttributes: customValues,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to update lead");
+        }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to add lead");
+        onSuccess(data.lead || { ...leadToEdit, customerName, businessName, mobile, email, customAttributes: customValues });
+        onClose();
+      } else {
+        // POST new lead
+        const res = await fetch(`/api/leads${query}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: customerName.trim(),
+            businessName: businessName.trim(),
+            mobile: mobile.trim(),
+            email: email.trim(),
+            customAttributes: customValues,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to add lead");
+        }
+
+        setCustomerName("");
+        setBusinessName("");
+        setMobile("");
+        setEmail("");
+        setCustomValues({});
+
+        onSuccess(data.lead);
+        onClose();
       }
-
-      // Reset form
-      setCustomerName("");
-      setBusinessName("");
-      setMobile("");
-      setEmail("");
-      setCustomValues({});
-
-      onSuccess(data.lead);
-      onClose();
     } catch (err: any) {
       setError(err.message || "Failed to save lead.");
     } finally {
@@ -151,10 +212,6 @@ export default function AddLeadModal({
     }
   };
 
-  // Dynamic modal sizing based on number of custom attributes:
-  // 0 attributes: max-w-[420px]
-  // 1-2 attributes: max-w-[520px]
-  // 3+ attributes: max-w-[680px]
   const hasCustomAttributes = customAttributes.length > 0;
   const isLargeModal = customAttributes.length >= 3;
   const modalWidthClass = isLargeModal
@@ -172,7 +229,7 @@ export default function AddLeadModal({
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>
             <h3 className="text-[14.5px] font-medium text-slate-900 flex items-center gap-1.5">
-              <span>Add New Lead</span>
+              <span>{isEditing ? "Edit Lead" : "Add New Lead"}</span>
               {hasCustomAttributes && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-100">
                   +{customAttributes.length} Custom {customAttributes.length === 1 ? "Field" : "Fields"}
@@ -180,7 +237,9 @@ export default function AddLeadModal({
               )}
             </h3>
             <p className="text-[11px] text-slate-400">
-              Capture customer inquiry, business details, and custom metadata
+              {isEditing
+                ? "Update customer inquiry, business details, and qualification metadata"
+                : "Capture customer inquiry, business details, and custom metadata"}
             </p>
           </div>
           <button
@@ -204,7 +263,7 @@ export default function AddLeadModal({
           <div>
             {hasCustomAttributes && (
               <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5">
-                Lead Contact & Business Details
+                Lead Contact &amp; Business Details
               </div>
             )}
 
@@ -406,12 +465,12 @@ export default function AddLeadModal({
               {loading ? (
                 <>
                   <RefreshCw size={13} className="animate-spin" />
-                  <span>Saving Lead...</span>
+                  <span>{isEditing ? "Updating..." : "Saving..."}</span>
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  <span>Save Lead</span>
+                  <span>{isEditing ? "Update Lead" : "Save Lead"}</span>
                 </>
               )}
             </button>

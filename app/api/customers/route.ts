@@ -153,7 +153,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
     }
 
-    const { id, customAttributes } = await req.json();
+    const body = await req.json();
+    const { id, name, mobile, email, city, customAttributes } = body;
     if (!id) {
       return NextResponse.json({ success: false, error: "Customer ID is required." }, { status: 400 });
     }
@@ -169,15 +170,27 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 403 });
     }
 
-    const currentAttrs = snap.data().customAttributes || {};
-    const updatedAttrs = { ...currentAttrs, ...customAttributes };
-
-    await updateDoc(docRef, {
-      customAttributes: updatedAttrs,
+    const updates: Record<string, any> = {
       updatedAt: new Date().toISOString(),
-    });
+    };
 
-    return NextResponse.json({ success: true, message: "Customer updated successfully." });
+    if (name?.trim()) updates.name = name.trim();
+    if (mobile?.trim()) updates.mobile = mobile.trim();
+    if (email !== undefined) updates.email = email?.trim() ? email.trim().toLowerCase() : "";
+    if (city?.trim()) updates.city = city.trim();
+
+    if (customAttributes && typeof customAttributes === "object") {
+      const currentAttrs = snap.data().customAttributes || {};
+      updates.customAttributes = { ...currentAttrs, ...customAttributes };
+    }
+
+    await updateDoc(docRef, updates);
+
+    return NextResponse.json({
+      success: true,
+      message: "Customer updated successfully.",
+      customer: { id, ...snap.data(), ...updates },
+    });
   } catch (err: any) {
     console.error("[Patch Customer API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

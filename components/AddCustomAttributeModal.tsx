@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Plus, Trash2, Check, RefreshCw, AlertCircle, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Plus, Check, RefreshCw, AlertCircle, Sparkles, Edit3 } from "lucide-react";
 
 export type CustomDataType = "String" | "Integer" | "Boolean" | "List";
 
@@ -13,6 +13,7 @@ export interface CustomAttribute {
   options?: string[];
   mandatory: boolean;
   defaultValue?: any;
+  order?: number;
   entity: string;
   userId?: string;
   createdAt?: string;
@@ -22,6 +23,7 @@ export interface CustomAttribute {
 interface AddCustomAttributeModalProps {
   isOpen: boolean;
   entity: string;
+  attributeToEdit?: CustomAttribute | null;
   onClose: () => void;
   onSuccess: (attribute: CustomAttribute) => void;
 }
@@ -29,6 +31,7 @@ interface AddCustomAttributeModalProps {
 export default function AddCustomAttributeModal({
   isOpen,
   entity,
+  attributeToEdit,
   onClose,
   onSuccess,
 }: AddCustomAttributeModalProps) {
@@ -42,7 +45,36 @@ export default function AddCustomAttributeModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Sync state with attributeToEdit or reset on open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (attributeToEdit) {
+      setName(attributeToEdit.name || "");
+      setDataType(attributeToEdit.dataType || "String");
+      setListValues(Array.isArray(attributeToEdit.options) ? [...attributeToEdit.options] : []);
+      setMandatory(Boolean(attributeToEdit.mandatory));
+      setDefaultValue(
+        attributeToEdit.defaultValue !== undefined && attributeToEdit.defaultValue !== null
+          ? String(attributeToEdit.defaultValue)
+          : ""
+      );
+      setNewListItem("");
+      setError(null);
+    } else {
+      setName("");
+      setDataType("String");
+      setListValues([]);
+      setNewListItem("");
+      setMandatory(false);
+      setDefaultValue("");
+      setError(null);
+    }
+  }, [isOpen, attributeToEdit]);
+
   if (!isOpen) return null;
+
+  const isEditing = Boolean(attributeToEdit);
 
   const getEntityDisplayName = (e: string) => {
     switch (e.toLowerCase()) {
@@ -81,6 +113,7 @@ export default function AddCustomAttributeModal({
   };
 
   const handleDataTypeChange = (newType: CustomDataType) => {
+    if (isEditing) return; // Disallow changing datatype on edit
     setDataType(newType);
     setError(null);
     if (newType === "Boolean") {
@@ -114,35 +147,57 @@ export default function AddCustomAttributeModal({
       const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
       const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
 
-      const res = await fetch(`/api/custom-attributes${query}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          dataType,
-          options: dataType === "List" ? listValues : [],
-          mandatory,
-          defaultValue: dataType === "Boolean" ? (defaultValue === "true") : defaultValue,
-          entity: entity.toLowerCase(),
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to create attribute");
+      let formattedDefault: any = defaultValue;
+      if (dataType === "Boolean") {
+        formattedDefault = Boolean(defaultValue === "true");
+      } else if (dataType === "Integer") {
+        formattedDefault = defaultValue !== "" && !isNaN(Number(defaultValue)) ? parseInt(defaultValue, 10) : "";
       }
 
-      // Reset form
-      setName("");
-      setDataType("String");
-      setListValues([]);
-      setNewListItem("");
-      setMandatory(false);
-      setDefaultValue("");
+      if (isEditing && attributeToEdit) {
+        // PATCH update
+        const res = await fetch(`/api/custom-attributes${query}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: attributeToEdit.id,
+            name: name.trim(),
+            options: dataType === "List" ? listValues : [],
+            mandatory,
+            defaultValue: formattedDefault,
+          }),
+        });
 
-      onSuccess(data.attribute);
-      onClose();
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to update attribute");
+        }
+
+        onSuccess(data.attribute);
+        onClose();
+      } else {
+        // POST create
+        const res = await fetch(`/api/custom-attributes${query}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            dataType,
+            options: dataType === "List" ? listValues : [],
+            mandatory,
+            defaultValue: formattedDefault,
+            entity: entity.toLowerCase(),
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to create attribute");
+        }
+
+        onSuccess(data.attribute);
+        onClose();
+      }
     } catch (err: any) {
       setError(err.message || "Failed to save attribute.");
     } finally {
@@ -157,13 +212,15 @@ export default function AddCustomAttributeModal({
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>
             <h3 className="text-[14.5px] font-medium text-slate-900 flex items-center gap-1.5">
-              <span>Add Custom Attribute</span>
+              <span>{isEditing ? "Edit Custom Attribute" : "Add Custom Attribute"}</span>
               <span className="text-[10.5px] px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] font-medium border border-purple-100">
                 {getEntityDisplayName(entity)}
               </span>
             </h3>
             <p className="text-[11px] text-slate-400">
-              Define attribute name, datatype, list options, and rules
+              {isEditing
+                ? "Update attribute title, requirements, list options, and default value"
+                : "Define attribute name, datatype, list options, and rules"}
             </p>
           </div>
           <button
@@ -200,13 +257,19 @@ export default function AddCustomAttributeModal({
 
           {/* 2. Data Type Dropdown */}
           <div>
-            <label className="block text-[12px] font-medium text-slate-700 mb-1">
-              Data Type <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[12px] font-medium text-slate-700">
+                Data Type <span className="text-rose-500">*</span>
+              </label>
+              {isEditing && (
+                <span className="text-[10px] text-slate-400">Cannot modify type of existing attribute</span>
+              )}
+            </div>
             <select
               value={dataType}
+              disabled={isEditing}
               onChange={(e) => handleDataTypeChange(e.target.value as CustomDataType)}
-              className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal cursor-pointer"
+              className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <option value="String">String (Text, alphanumeric, notes)</option>
               <option value="Integer">Integer (Whole numbers, counts, limits)</option>
@@ -392,12 +455,12 @@ export default function AddCustomAttributeModal({
               {loading ? (
                 <>
                   <RefreshCw size={13} className="animate-spin" />
-                  <span>Saving Attribute...</span>
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  <span>Save Attribute</span>
+                  <span>{isEditing ? "Update Attribute" : "Save Attribute"}</span>
                 </>
               )}
             </button>

@@ -15,6 +15,8 @@ interface ResponsiveDataListProps<T extends { id: string }> {
   columns: ColumnDef<T>[];
   pageSize?: number;
   renderMobileCard?: (item: T) => React.ReactNode;
+  expandedRowId?: string | null;
+  renderExpandedRow?: (item: T) => React.ReactNode;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: React.ReactNode;
@@ -26,6 +28,8 @@ export default function ResponsiveDataList<T extends { id: string }>({
   columns,
   pageSize = 24,
   renderMobileCard,
+  expandedRowId,
+  renderExpandedRow,
   emptyTitle = "No records found",
   emptyDescription = "There are no records in this list yet.",
   emptyAction,
@@ -89,16 +93,26 @@ export default function ResponsiveDataList<T extends { id: string }>({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {currentItems.map((item) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-slate-50/70 transition-colors h-[38px] text-[12.5px] text-slate-700 font-normal"
-                >
-                  {columns.map((col) => (
-                    <td key={col.key} className={`px-3.5 py-2 ${col.className || ""}`}>
-                      {col.render ? col.render(item) : (item as any)[col.key] ?? "—"}
-                    </td>
-                  ))}
-                </tr>
+                <React.Fragment key={item.id}>
+                  <tr
+                    className={`hover:bg-slate-50/70 transition-colors h-[38px] text-[12.5px] text-slate-700 font-normal ${
+                      expandedRowId === item.id ? "bg-purple-50/30 font-medium" : ""
+                    }`}
+                  >
+                    {columns.map((col) => (
+                      <td key={col.key} className={`px-3.5 py-2 ${col.className || ""}`}>
+                        {col.render ? col.render(item) : (item as any)[col.key] ?? "—"}
+                      </td>
+                    ))}
+                  </tr>
+                  {expandedRowId === item.id && renderExpandedRow && (
+                    <tr className="bg-slate-50/70 border-b border-purple-100">
+                      <td colSpan={columns.length} className="px-4 py-3">
+                        {renderExpandedRow(item)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

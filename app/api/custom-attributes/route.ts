@@ -10,6 +10,7 @@ import {
   doc,
   deleteDoc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 export const dynamic = "force-dynamic";
@@ -64,8 +65,13 @@ export async function GET(req: NextRequest) {
       ? attributes.filter((a) => a.entity?.toLowerCase() === entityParam.toLowerCase())
       : attributes;
 
-    // Sort by createdAt ascending (so schema maintains orderly sequence)
-    filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+    // Sort primarily by order ascending, then by createdAt ascending
+    filtered.sort((a, b) => {
+      const orderA = typeof a.order === "number" ? a.order : 999999;
+      const orderB = typeof b.order === "number" ? b.order : 999999;
+      if (orderA !== orderB) return orderA - orderB;
+      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+    });
 
     return NextResponse.json({ success: true, attributes: filtered });
   } catch (err: any) {
@@ -150,6 +156,20 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Find current max order for this user & entity to put at the end
+    const qCount = query(
+      collection(db, "custom_attributes"),
+      where("userId", "==", userEmail)
+    );
+    const snapCount = await getDocs(qCount);
+    let nextOrder = 0;
+    snapCount.forEach((d) => {
+      if (d.data().entity?.toLowerCase() === targetEntity) {
+        const curOrder = typeof d.data().order === "number" ? d.data().order : 0;
+        if (curOrder >= nextOrder) nextOrder = curOrder + 1;
+      }
+    });
+
     const now = new Date().toISOString();
     const newAttribute = {
       name: name.trim(),
@@ -158,6 +178,7 @@ export async function POST(req: NextRequest) {
       options: cleanOptions,
       mandatory: Boolean(mandatory),
       defaultValue: formattedDefault,
+      order: nextOrder,
       entity: targetEntity,
       userId: userEmail, // Strict multi-tenant isolation
       createdAt: now,
@@ -173,6 +194,65 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error("[Create Custom Attribute API Error]", err);
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const userEmail = getUserEmailFromReq(req);
+    if (!userEmail) {
+      return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
+    }
+
+    const body = await req.json();
+
+    // 1. Reordering action for drag and drop
+    if (body.action === "reorder" && Array.isArray(body.orderedIds)) {
+      const updates = body.orderedIds.map(async (attrId: string, index: number) => {
+        const docRef = doc(db, "custom_attributes", attrId);
+        const snap = await getDoc(docRef);
+        if (snap.exists() && snap.data().userId === userEmail) {
+          await updateDoc(docRef, { order: index, updatedAt: new Date().toISOString() });
+        }
+      });
+      await Promise.all(updates);
+      return NextResponse.json({ success: true, message: "Order updated successfully." });
+    }
+
+    // 2. Single attribute edit
+    const { id, name, options, mandatory, defaultValue } = body;
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Attribute ID is required." }, { status: 400 });
+    }
+
+    const docRef = doc(db, "custom_attributes", id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      return NextResponse.json({ success: false, error: "Attribute not found." }, { status: 404 });
+    }
+
+    if (snap.data().userId !== userEmail) {
+      return NextResponse.json({ success: false, error: "Unauthorized." }, { status: 403 });
+    }
+
+    const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
+    if (name?.trim()) updates.name = name.trim();
+    if (mandatory !== undefined) updates.mandatory = Boolean(mandatory);
+    if (options && Array.isArray(options)) {
+      updates.options = options.map((opt: any) => String(opt).trim()).filter(Boolean);
+    }
+    if (defaultValue !== undefined) updates.defaultValue = defaultValue;
+
+    await updateDoc(docRef, updates);
+
+    return NextResponse.json({
+      success: true,
+      message: "Attribute updated successfully.",
+      attribute: { id, ...snap.data(), ...updates },
+    });
+  } catch (err: any) {
+    console.error("[Patch Custom Attribute API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

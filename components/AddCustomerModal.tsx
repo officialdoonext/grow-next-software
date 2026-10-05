@@ -1,17 +1,19 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check, Sparkles } from "lucide-react";
+import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check, Sparkles, Edit2 } from "lucide-react";
 import { CustomAttribute } from "./AddCustomAttributeModal";
 
 interface AddCustomerModalProps {
   isOpen: boolean;
+  customerToEdit?: any | null;
   onClose: () => void;
-  onSuccess: (newCustomer: any) => void;
+  onSuccess: (savedCustomer: any) => void;
 }
 
 export default function AddCustomerModal({
   isOpen,
+  customerToEdit,
   onClose,
   onSuccess,
 }: AddCustomerModalProps) {
@@ -29,6 +31,8 @@ export default function AddCustomerModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isEditing = Boolean(customerToEdit);
+
   // Fetch customer custom attributes when modal opens
   useEffect(() => {
     if (!isOpen) return;
@@ -44,20 +48,54 @@ export default function AddCustomerModal({
         const data = await res.json();
 
         if (isMounted && data.success && Array.isArray(data.attributes)) {
-          setCustomAttributes(data.attributes);
-
-          // Initialize custom values with default values from attributes schema
-          const initialVals: Record<string, any> = {};
-          data.attributes.forEach((attr: CustomAttribute) => {
-            if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
-              initialVals[attr.key] = attr.defaultValue;
-            } else if (attr.dataType === "Boolean") {
-              initialVals[attr.key] = false;
-            } else {
-              initialVals[attr.key] = "";
-            }
+          // Sort strictly by order ascending
+          const sorted = [...(data.attributes as CustomAttribute[])].sort((a, b) => {
+            const orderA = typeof a.order === "number" ? a.order : 999999;
+            const orderB = typeof b.order === "number" ? b.order : 999999;
+            if (orderA !== orderB) return orderA - orderB;
+            return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
           });
-          setCustomValues(initialVals);
+          setCustomAttributes(sorted);
+
+          // If editing an existing customer, populate values from customerToEdit
+          if (customerToEdit) {
+            setName(customerToEdit.name || "");
+            setMobile(customerToEdit.mobile || "");
+            setEmail(customerToEdit.email || "");
+            setCity(customerToEdit.city || "");
+
+            const initialVals: Record<string, any> = {};
+            sorted.forEach((attr: CustomAttribute) => {
+              if (customerToEdit.customAttributes && customerToEdit.customAttributes[attr.key] !== undefined) {
+                initialVals[attr.key] = customerToEdit.customAttributes[attr.key];
+              } else if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
+                initialVals[attr.key] = attr.defaultValue;
+              } else if (attr.dataType === "Boolean") {
+                initialVals[attr.key] = false;
+              } else {
+                initialVals[attr.key] = "";
+              }
+            });
+            setCustomValues(initialVals);
+          } else {
+            // New Customer creation: use attribute defaults
+            setName("");
+            setMobile("");
+            setEmail("");
+            setCity("");
+
+            const initialVals: Record<string, any> = {};
+            sorted.forEach((attr: CustomAttribute) => {
+              if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
+                initialVals[attr.key] = attr.defaultValue;
+              } else if (attr.dataType === "Boolean") {
+                initialVals[attr.key] = false;
+              } else {
+                initialVals[attr.key] = "";
+              }
+            });
+            setCustomValues(initialVals);
+          }
         }
       } catch (err) {
         console.warn("[Error fetching customer custom attributes]", err);
@@ -71,7 +109,7 @@ export default function AddCustomerModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen]);
+  }, [isOpen, customerToEdit]);
 
   if (!isOpen) return null;
 
@@ -117,33 +155,56 @@ export default function AddCustomerModal({
       const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
       const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
 
-      const res = await fetch(`/api/customers${query}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          mobile: mobile.trim(),
-          email: email.trim(),
-          city: city.trim(),
-          customAttributes: customValues,
-        }),
-      });
+      if (isEditing && customerToEdit) {
+        // PATCH existing customer
+        const res = await fetch(`/api/customers${query}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: customerToEdit.id,
+            name: name.trim(),
+            mobile: mobile.trim(),
+            email: email.trim(),
+            city: city.trim(),
+            customAttributes: customValues,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to update customer");
+        }
 
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to add customer");
+        onSuccess(data.customer || { ...customerToEdit, name, mobile, email, city, customAttributes: customValues });
+        onClose();
+      } else {
+        // POST new customer
+        const res = await fetch(`/api/customers${query}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim(),
+            mobile: mobile.trim(),
+            email: email.trim(),
+            city: city.trim(),
+            customAttributes: customValues,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to add customer");
+        }
+
+        setName("");
+        setMobile("");
+        setEmail("");
+        setCity("");
+        setCustomValues({});
+
+        onSuccess(data.customer);
+        onClose();
       }
-
-      // Reset form
-      setName("");
-      setMobile("");
-      setEmail("");
-      setCity("");
-      setCustomValues({});
-
-      onSuccess(data.customer);
-      onClose();
     } catch (err: any) {
       setError(err.message || "Failed to save customer.");
     } finally {
@@ -151,10 +212,6 @@ export default function AddCustomerModal({
     }
   };
 
-  // Dynamic modal sizing based on number of custom attributes:
-  // 0 attributes: max-w-[420px]
-  // 1-2 attributes: max-w-[520px]
-  // 3+ attributes: max-w-[680px]
   const hasCustomAttributes = customAttributes.length > 0;
   const isLargeModal = customAttributes.length >= 3;
   const modalWidthClass = isLargeModal
@@ -172,7 +229,7 @@ export default function AddCustomerModal({
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>
             <h3 className="text-[14.5px] font-medium text-slate-900 flex items-center gap-1.5">
-              <span>Add New Customer</span>
+              <span>{isEditing ? "Edit Customer" : "Add New Customer"}</span>
               {hasCustomAttributes && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-100">
                   +{customAttributes.length} Custom {customAttributes.length === 1 ? "Field" : "Fields"}
@@ -180,7 +237,9 @@ export default function AddCustomerModal({
               )}
             </h3>
             <p className="text-[11px] text-slate-400">
-              Enter customer contact information and configured business attributes
+              {isEditing
+                ? "Update customer contact profile and business attributes"
+                : "Enter customer contact information and configured business attributes"}
             </p>
           </div>
           <button
@@ -406,12 +465,12 @@ export default function AddCustomerModal({
               {loading ? (
                 <>
                   <RefreshCw size={13} className="animate-spin" />
-                  <span>Saving Customer...</span>
+                  <span>{isEditing ? "Updating..." : "Saving..."}</span>
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  <span>Save Customer</span>
+                  <span>{isEditing ? "Update Customer" : "Save Customer"}</span>
                 </>
               )}
             </button>
