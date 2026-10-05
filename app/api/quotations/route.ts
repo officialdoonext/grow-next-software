@@ -88,7 +88,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       customerName,
+      businessName,
+      mobile,
+      email,
       title,
+      items,
       issueDate,
       validUntil,
       amount,
@@ -97,9 +101,9 @@ export async function POST(req: NextRequest) {
       customAttributes,
     } = body;
 
-    if (!customerName?.trim() || !title?.trim()) {
+    if (!customerName?.trim()) {
       return NextResponse.json(
-        { success: false, error: "Customer Name and Proposal Title are required." },
+        { success: false, error: "Customer Name is required." },
         { status: 400 }
       );
     }
@@ -117,7 +121,11 @@ export async function POST(req: NextRequest) {
     const newQuotation = {
       quotationNumber: assignedQuotationNumber,
       customerName: customerName.trim(),
-      title: title.trim(),
+      businessName: businessName ? String(businessName).trim() : "",
+      mobile: mobile ? String(mobile).trim() : "",
+      email: email ? String(email).trim().toLowerCase() : "",
+      title: title ? String(title).trim() : "",
+      items: Array.isArray(items) ? items : [],
       issueDate: targetIssueDate,
       validUntil: validUntil || "",
       amount: typeof amount === "number" ? amount : parseFloat(amount) || 0,
@@ -174,7 +182,11 @@ export async function PATCH(req: NextRequest) {
 
     // quotationNumber is strictly immutable / not editable
     if (updates.customerName !== undefined) cleanUpdates.customerName = String(updates.customerName).trim();
+    if (updates.businessName !== undefined) cleanUpdates.businessName = String(updates.businessName).trim();
+    if (updates.mobile !== undefined) cleanUpdates.mobile = String(updates.mobile).trim();
+    if (updates.email !== undefined) cleanUpdates.email = String(updates.email).trim().toLowerCase();
     if (updates.title !== undefined) cleanUpdates.title = String(updates.title).trim();
+    if (updates.items !== undefined && Array.isArray(updates.items)) cleanUpdates.items = updates.items;
     if (updates.issueDate !== undefined) cleanUpdates.issueDate = updates.issueDate;
     if (updates.validUntil !== undefined) cleanUpdates.validUntil = updates.validUntil;
     if (updates.amount !== undefined) cleanUpdates.amount = typeof updates.amount === "number" ? updates.amount : parseFloat(updates.amount) || 0;

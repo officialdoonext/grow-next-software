@@ -35,6 +35,23 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
   const [loading, setLoading] = useState(true);
   const [authorizedUser, setAuthorizedUser] = useState<any | null>(null);
   const [denialReason, setDenialReason] = useState<string | null>(null);
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
+
+  // Listen for real-time logo updates
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cachedLogo = localStorage.getItem("grownext_user_logo");
+      if (cachedLogo) setCustomLogoUrl(cachedLogo);
+
+      const handleLogoUpdate = (e: any) => {
+        const newLogo = e.detail?.logoUrl || localStorage.getItem("grownext_user_logo");
+        setCustomLogoUrl(newLogo || null);
+      };
+
+      window.addEventListener("grownext_logo_updated", handleLogoUpdate);
+      return () => window.removeEventListener("grownext_logo_updated", handleLogoUpdate);
+    }
+  }, []);
 
   useEffect(() => {
     async function verifyAccess() {
@@ -65,6 +82,23 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
         }
 
         setAuthorizedUser(data.user);
+        if (data.user?.logoUrl) {
+          setCustomLogoUrl(data.user.logoUrl);
+          localStorage.setItem("grownext_user_logo", data.user.logoUrl);
+        } else {
+          const userEmail = data.user?.email || savedEmail;
+          if (userEmail) {
+            fetch(`/api/settings/profile?email=${encodeURIComponent(userEmail)}`)
+              .then((r) => r.json())
+              .then((pData) => {
+                if (pData.success && pData.profile?.logoUrl) {
+                  setCustomLogoUrl(pData.profile.logoUrl);
+                  localStorage.setItem("grownext_user_logo", pData.profile.logoUrl);
+                }
+              })
+              .catch(() => {});
+          }
+        }
         setLoading(false);
       } catch {
         router.replace("/?blocked=error");
@@ -182,14 +216,22 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
         <div className="h-[56px] px-4 border-b border-slate-100 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="relative w-[130px] h-[36px] flex items-center">
-              <Image
-                src="/grownext-logo.jpeg"
-                alt="GrowNext"
-                width={130}
-                height={36}
-                priority
-                className="object-contain mix-blend-multiply"
-              />
+              {customLogoUrl ? (
+                <img
+                  src={customLogoUrl}
+                  alt={authorizedUser?.name || "Logo"}
+                  className="max-h-[36px] max-w-[130px] object-contain"
+                />
+              ) : (
+                <Image
+                  src="/grownext-logo.jpeg"
+                  alt="GrowNext"
+                  width={130}
+                  height={36}
+                  priority
+                  className="object-contain mix-blend-multiply"
+                />
+              )}
             </div>
           </Link>
           <button
@@ -316,14 +358,22 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
             <div className="md:hidden flex items-center">
               <Link href="/dashboard" className="flex items-center">
                 <div className="relative w-[115px] h-[32px] flex items-center">
-                  <Image
-                    src="/grownext-logo.jpeg"
-                    alt="GrowNext"
-                    width={115}
-                    height={32}
-                    priority
-                    className="object-contain mix-blend-multiply"
-                  />
+                  {customLogoUrl ? (
+                    <img
+                      src={customLogoUrl}
+                      alt={authorizedUser?.name || "Logo"}
+                      className="max-h-[32px] max-w-[115px] object-contain"
+                    />
+                  ) : (
+                    <Image
+                      src="/grownext-logo.jpeg"
+                      alt="GrowNext"
+                      width={115}
+                      height={32}
+                      priority
+                      className="object-contain mix-blend-multiply"
+                    />
+                  )}
                 </div>
               </Link>
             </div>
@@ -342,6 +392,17 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
 
           {/* Header Right Actions matching attached design */}
           <div className="flex items-center gap-3">
+            {/* Header Custom Logo Display (if present) or User Avatar */}
+            {customLogoUrl && (
+              <div className="hidden md:flex items-center pr-2 border-r border-slate-100">
+                <img
+                  src={customLogoUrl}
+                  alt="Company Logo"
+                  className="max-h-[28px] max-w-[100px] object-contain"
+                />
+              </div>
+            )}
+
             {/* Emerald Licensed Active Pill */}
             <span className="hidden sm:flex text-[11.5px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-2.5 py-1 rounded-[6px] items-center gap-1.5 shadow-2xs">
               <ShieldCheck size={13} className="text-[#059669]" />

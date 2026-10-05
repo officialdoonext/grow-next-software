@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
 import AddInvoiceModal, { Invoice } from "@/components/AddInvoiceModal";
+import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
@@ -36,6 +37,7 @@ export default function InvoicesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [invoiceToEdit, setInvoiceToEdit] = useState<Invoice | null>(null);
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Expanded Row for Detailed View
@@ -99,7 +101,8 @@ export default function InvoicesPage() {
     return (
       inv.invoiceNumber.toLowerCase().includes(term) ||
       inv.customerName.toLowerCase().includes(term) ||
-      inv.title.toLowerCase().includes(term) ||
+      (inv.businessName && inv.businessName.toLowerCase().includes(term)) ||
+      (inv.title && inv.title.toLowerCase().includes(term)) ||
       inv.status.toLowerCase().includes(term) ||
       String(inv.amount).includes(term) ||
       hasAttr
@@ -181,9 +184,15 @@ export default function InvoicesPage() {
             <span className="font-mono font-medium text-slate-800 truncate block text-[12.5px] leading-tight">
               {item.invoiceNumber}
             </span>
-            <span className="text-[11px] text-slate-400 truncate block mt-0.5" title={item.title}>
-              {item.title}
-            </span>
+            {item.businessName ? (
+              <span className="text-[11px] text-slate-400 truncate block mt-0.5" title={item.businessName}>
+                {item.businessName}
+              </span>
+            ) : item.title ? (
+              <span className="text-[11px] text-slate-400 truncate block mt-0.5" title={item.title}>
+                {item.title}
+              </span>
+            ) : null}
           </div>
         </div>
       ),
@@ -319,8 +328,8 @@ export default function InvoicesPage() {
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => setExpandedRowId(expandedRowId === item.id ? null : item.id)}
-            title="View Details"
+            onClick={() => setPreviewInvoice(item)}
+            title="Preview Invoice"
             className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer"
           >
             <Eye size={13} />
@@ -369,10 +378,24 @@ export default function InvoicesPage() {
           <span className="font-mono text-[13px] font-medium text-[#6024a8]">
             {item.invoiceNumber}
           </span>
-          <span className="text-slate-400">•</span>
-          <span className="text-[13px] font-medium text-slate-800">{item.title}</span>
+          {item.businessName && (
+            <>
+              <span className="text-slate-400">•</span>
+              <span className="text-[13px] font-medium text-slate-800">{item.businessName}</span>
+            </>
+          )}
         </div>
-        <div>{getStatusBadge(item.status)}</div>
+        <div className="flex items-center gap-2">
+          {getStatusBadge(item.status)}
+          <button
+            type="button"
+            onClick={() => setPreviewInvoice(item)}
+            className="h-[26px] max-h-[34px] px-2.5 rounded-[5px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <FileText size={11} />
+            <span>Preview & Print</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[12px]">
@@ -597,10 +620,21 @@ export default function InvoicesPage() {
           setIsAddModalOpen(false);
           setInvoiceToEdit(null);
         }}
-        onSuccess={() => {
+        onSuccess={(savedDoc) => {
           setIsAddModalOpen(false);
           setInvoiceToEdit(null);
+          if (savedDoc) {
+            setPreviewInvoice(savedDoc);
+          }
         }}
+      />
+
+      {/* Document Printable Preview Modal */}
+      <DocumentPreviewModal
+        isOpen={Boolean(previewInvoice)}
+        type="invoice"
+        document={previewInvoice}
+        onClose={() => setPreviewInvoice(null)}
       />
 
       {/* Delete Confirmation Modal */}
