@@ -25,6 +25,7 @@ import {
   ChevronDown,
   RefreshCw,
   CheckCircle2,
+  BarChart2,
 } from "lucide-react";
 
 type EntityKey = "leads" | "customers" | "quotations" | "invoices";
@@ -466,13 +467,50 @@ export default function CustomObjectsPage() {
 
   return (
     <SoftwareLayout pageTitle="Custom Objects">
-      <div className="flex flex-col lg:flex-row gap-5 items-start">
-        {/* 1. Left Sub-Sidebar (Desktop: 220px, Mobile: Full Width) */}
-        <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[6px] border border-slate-200/80 p-3 shadow-2xs">
-          <div className="px-2 pt-1 pb-2 border-b border-slate-100 mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-medium tracking-[0.14em] text-slate-400 uppercase">
-              Entities
-            </span>
+      <div className="space-y-4">
+        {/* 1. Hero Banner matching design mockup */}
+        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-purple-50/20 to-purple-100/30 border border-slate-200/80 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
+            <div className="absolute -right-8 -top-8 w-60 h-60 rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-2xl" />
+          </div>
+
+          <div className="relative z-10">
+            <h1 className="text-[24px] sm:text-[26px] font-medium text-slate-900 tracking-tight">
+              Custom Objects
+            </h1>
+            <p className="text-[12.5px] text-slate-500 font-normal mt-1 max-w-xl">
+              Configure tailored data attributes, qualification criteria, and custom schemas.
+            </p>
+          </div>
+
+          <div className="relative z-10 bg-white/95 backdrop-blur-xs rounded-[8px] border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex items-center gap-4 shrink-0">
+            <div className="w-10 h-10 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
+              <BarChart2 size={18} />
+            </div>
+            <div>
+              <div className="text-[20px] font-medium text-slate-900 leading-none">
+                {attributes.length}
+              </div>
+              <span className="text-[11px] text-slate-400 font-normal">Total Attributes</span>
+            </div>
+            <div className="pl-3 border-l border-slate-100 text-right">
+              <span className="text-[#059669] text-[11px] font-medium flex items-center justify-end gap-0.5">
+                ↗ 0%
+              </span>
+              <span className="text-[9.5px] text-slate-400 block whitespace-nowrap">
+                across entities
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
+          {/* 1. Left Sub-Sidebar (Desktop: 220px, Mobile: Full Width) */}
+          <div className="w-full lg:w-[220px] shrink-0 bg-white rounded-[6px] border border-slate-200/80 p-3 shadow-2xs">
+            <div className="px-2 pt-1 pb-2 border-b border-slate-100 mb-2 flex items-center justify-between">
+              <span className="text-[10px] font-medium tracking-[0.14em] text-slate-400 uppercase">
+                Entities
+              </span>
             <SlidersHorizontal size={12} className="text-slate-400" />
           </div>
 
@@ -935,6 +973,7 @@ export default function CustomObjectsPage() {
             onCancel={() => setAttributeToDelete(null)}
           />
         </div>
+      </div>
       </div>
     </SoftwareLayout>
   );

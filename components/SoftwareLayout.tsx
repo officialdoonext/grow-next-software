@@ -18,14 +18,17 @@ import {
   ChevronRight,
   AlertTriangle,
   RefreshCw,
+  Home,
+  ChevronsLeft,
 } from "lucide-react";
 
 interface SoftwareLayoutProps {
   children: React.ReactNode;
   pageTitle: string;
+  hideDefaultHeader?: boolean;
 }
 
-export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutProps) {
+export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader = true }: SoftwareLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -100,6 +103,15 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
     { label: "Settings", href: "/settings", icon: <Settings size={15} /> },
   ];
 
+  const userInitials = authorizedUser?.name
+    ? authorizedUser.name
+        .split(" ")
+        .map((n: string) => n[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "DT";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fafafc] flex flex-col items-center justify-center p-4 font-sans">
@@ -161,10 +173,13 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
 
   // Sidebar Component content
   const sidebarContent = (
-    <div className="flex flex-col h-full justify-between bg-white select-none">
-      <div>
+    <div className="relative flex flex-col h-full justify-between bg-white select-none overflow-hidden">
+      {/* Ambient Bottom-Left Purple Glow */}
+      <div className="absolute -bottom-16 -left-16 w-52 h-52 rounded-full bg-gradient-to-tr from-purple-200/35 via-purple-100/20 to-transparent blur-2xl pointer-events-none" />
+
+      <div className="relative z-10">
         {/* Brand / Logo Section */}
-        <div className="h-[56px] px-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="h-[56px] px-4 border-b border-slate-100 flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
             <div className="relative w-[130px] h-[36px] flex items-center">
               <Image
@@ -177,6 +192,13 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
               />
             </div>
           </Link>
+          <button
+            type="button"
+            className="hidden md:flex text-slate-400 hover:text-slate-600 w-7 h-7 rounded-[4px] items-center justify-center hover:bg-slate-50 transition-colors"
+            title="Collapse sidebar"
+          >
+            <ChevronsLeft size={16} />
+          </button>
           {isMobileMenuOpen && (
             <button
               type="button"
@@ -206,7 +228,7 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`w-full h-[34px] max-h-[34px] px-3 rounded-[6px] text-[12.5px] font-medium flex items-center gap-2.5 transition-all ${
                   isActive
-                    ? "bg-[#f3e8ff] text-[#6024a8] border border-[#e9d5ff]"
+                    ? "bg-[#f4ecfc] text-[#6024a8] border border-purple-100/70"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
                 }`}
               >
@@ -224,21 +246,21 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
       </div>
 
       {/* Sidebar Footer: License Status & User Profile & Logout */}
-      <div className="p-3 border-t border-slate-100 bg-[#fafafc] space-y-2">
+      <div className="relative z-10 p-3 border-t border-slate-100 bg-[#fafafc]/90 backdrop-blur-xs space-y-2">
         {/* License Pill */}
-        <div className="p-2 rounded-[6px] bg-white border border-slate-200/80 shadow-2xs">
-          <div className="flex items-center justify-between mb-1">
+        <div className="p-2.5 rounded-[6px] bg-white border border-slate-200/80 shadow-2xs">
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10.5px] font-medium text-slate-500">License Status</span>
-            <span className="text-[10px] font-medium text-[#059669] bg-emerald-50 border border-emerald-100 px-1.5 py-0.2 rounded-[4px] flex items-center gap-1">
+            <span className="text-[10px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-1.5 py-0.5 rounded-[4px] flex items-center gap-1">
               <ShieldCheck size={11} />
               Active
             </span>
           </div>
-          <div className="text-[11px] text-slate-700 truncate font-medium">
-            {authorizedUser?.name || "Administrator"}
+          <div className="text-[11.5px] text-slate-800 truncate font-medium">
+            {authorizedUser?.name || "DooNext Testing"}
           </div>
           <div className="text-[10px] text-slate-400 truncate">
-            {authorizedUser?.email}
+            {authorizedUser?.email || "official.doonext@gmail.com"}
           </div>
         </div>
 
@@ -246,7 +268,7 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full h-[32px] max-h-[34px] px-2.5 rounded-[6px] bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 text-[11.5px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          className="w-full h-[32px] max-h-[34px] px-2.5 rounded-[6px] bg-white hover:bg-slate-50 border border-slate-200/80 text-slate-600 hover:text-slate-900 text-[11.5px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
           <LogOut size={13} />
           <span>Sign Out</span>
@@ -289,40 +311,54 @@ export default function SoftwareLayout({ children, pageTitle }: SoftwareLayoutPr
               <span className="text-[16px]">☰</span>
             </button>
 
-            {/* Breadcrumbs */}
-            <div className="flex items-center gap-1.5 text-[11.5px] text-slate-400">
-              <span className="hidden sm:inline">GrowNext</span>
-              <ChevronRight size={11} className="hidden sm:inline" />
+            {/* Breadcrumbs with Home Icon matching attached design */}
+            <div className="flex items-center gap-2 text-[12px] text-slate-400">
+              <Link href="/dashboard" className="hover:text-slate-600 transition-colors flex items-center">
+                <Home size={14} className="text-slate-400" />
+              </Link>
+              <ChevronRight size={12} className="text-slate-300" />
+              <span className="hidden sm:inline text-slate-500 font-normal">GrowNext</span>
+              <ChevronRight size={12} className="hidden sm:inline text-slate-300" />
               <span className="text-slate-800 font-medium">{pageTitle}</span>
             </div>
           </div>
 
-          {/* Header Right Actions */}
+          {/* Header Right Actions matching attached design */}
           <div className="flex items-center gap-3">
-            <span className="hidden sm:flex text-[11px] font-medium text-[#059669] bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-[4px] items-center gap-1">
-              <ShieldCheck size={12} />
-              Licensed Active
+            {/* Emerald Licensed Active Pill */}
+            <span className="hidden sm:flex text-[11.5px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-2.5 py-1 rounded-[6px] items-center gap-1.5 shadow-2xs">
+              <ShieldCheck size={13} className="text-[#059669]" />
+              <span>Licensed Active</span>
             </span>
-            <div className="hidden lg:flex flex-col text-right">
-              <span className="text-[12px] font-medium text-slate-800 truncate max-w-[150px]">
-                {authorizedUser?.name}
-              </span>
-              <span className="text-[10px] text-slate-400 truncate max-w-[150px]">
-                {authorizedUser?.email}
-              </span>
+
+            {/* User Profile Avatar Circle & Details */}
+            <div className="flex items-center gap-2.5 pl-1 sm:border-l sm:border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-[#f3e8ff] border border-purple-100 text-[#6024a8] flex items-center justify-center text-[12px] font-medium shadow-2xs shrink-0 select-none">
+                {userInitials}
+              </div>
+              <div className="hidden lg:flex flex-col text-left">
+                <span className="text-[12px] font-medium text-slate-800 leading-tight truncate max-w-[150px]">
+                  {authorizedUser?.name || "DooNext Testing"}
+                </span>
+                <span className="text-[10px] text-slate-400 leading-tight truncate max-w-[150px]">
+                  {authorizedUser?.email || "official.doonext@gmail.com"}
+                </span>
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-3 sm:p-3 max-w-7xl w-full">
-          <div className="mb-5 flex items-center justify-between">
-            <h1 className="text-[18px] font-medium text-slate-900">
-              {pageTitle}
-            </h1>
-          </div>
+        <main className="flex-1 p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full">
+          {!hideDefaultHeader && (
+            <div className="mb-5 flex items-center justify-between">
+              <h1 className="text-[18px] font-medium text-slate-900">
+                {pageTitle}
+              </h1>
+            </div>
+          )}
 
-          {/* Child Page Starter Container */}
+          {/* Child Page Content */}
           {children}
         </main>
       </div>
