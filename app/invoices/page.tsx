@@ -21,6 +21,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  Mail,
   FileText,
   Sparkles,
   ExternalLink,
@@ -39,6 +40,8 @@ export default function InvoicesPage() {
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [emailNotification, setEmailNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Expanded Row for Detailed View
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
@@ -132,6 +135,44 @@ export default function InvoicesPage() {
     } finally {
       setIsDeleting(false);
       setInvoiceToDelete(null);
+    }
+  };
+
+  // Send Email Action
+  const handleSendEmail = async (item: Invoice) => {
+    if (!item.email) return;
+    setSendingEmailId(item.id);
+    setEmailNotification(null);
+
+    try {
+      const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
+      const res = await fetch("/api/documents/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: savedEmail,
+          docType: "invoice",
+          document: item,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to dispatch email");
+      }
+
+      setEmailNotification({
+        type: "success",
+        message: data.message || `Invoice ${item.invoiceNumber} was successfully emailed to ${item.email}`,
+      });
+      setTimeout(() => setEmailNotification(null), 6000);
+    } catch (err: any) {
+      setEmailNotification({
+        type: "error",
+        message: err.message || "Failed to send email",
+      });
+    } finally {
+      setSendingEmailId(null);
     }
   };
 
@@ -322,10 +363,25 @@ export default function InvoicesPage() {
     {
       key: "actions",
       header: "ACTIONS",
-      width: "110px",
+      width: "135px",
       className: "text-right",
       render: (item) => (
         <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+          {item.email && (
+            <button
+              type="button"
+              onClick={() => handleSendEmail(item)}
+              disabled={sendingEmailId === item.id}
+              title={`Email Invoice with attachment to ${item.email}`}
+              className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {sendingEmailId === item.id ? (
+                <div className="w-3 h-3 border-2 border-[#6024a8] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Mail size={13} />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setPreviewInvoice(item)}
@@ -387,6 +443,21 @@ export default function InvoicesPage() {
         </div>
         <div className="flex items-center gap-2">
           {getStatusBadge(item.status)}
+          {item.email && (
+            <button
+              type="button"
+              onClick={() => handleSendEmail(item)}
+              disabled={sendingEmailId === item.id}
+              className="h-[26px] max-h-[34px] px-2.5 rounded-[5px] border border-purple-200 bg-purple-50 hover:bg-purple-100 text-[#6024a8] text-[11px] font-medium flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {sendingEmailId === item.id ? (
+                <div className="w-2.5 h-2.5 border-2 border-[#6024a8] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Mail size={11} />
+              )}
+              <span>Email</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setPreviewInvoice(item)}
@@ -531,6 +602,33 @@ export default function InvoicesPage() {
             </button>
           </div>
         </div>
+
+        {/* Email feedback notification */}
+        {emailNotification && (
+          <div
+            className={`p-3 rounded-[6px] border flex items-center justify-between text-[12.5px] transition-all animate-in fade-in ${
+              emailNotification.type === "success"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                : "bg-rose-50 text-rose-800 border-rose-200"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {emailNotification.type === "success" ? (
+                <CheckCircle2 size={15} className="text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle size={15} className="text-rose-600 shrink-0" />
+              )}
+              <span>{emailNotification.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEmailNotification(null)}
+              className="text-slate-400 hover:text-slate-600 text-[11px] cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         {/* 2. Top Action Bar: Search & Column Visibility */}
         <div className="bg-white rounded-[8px] border border-slate-200/90 p-3 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">

@@ -41,6 +41,8 @@ export default function DocumentPreviewModal({
   onClose,
 }: DocumentPreviewModalProps) {
   const [profile, setProfile] = useState<any>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailFeedback, setEmailFeedback] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -101,6 +103,42 @@ export default function DocumentPreviewModal({
     window.print();
   };
 
+  const handleSendEmail = async () => {
+    if (!document || !document.email) return;
+    setIsSendingEmail(true);
+    setEmailFeedback(null);
+
+    try {
+      const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
+      const res = await fetch("/api/documents/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: savedEmail,
+          docType: type,
+          document,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to send email");
+      }
+
+      setEmailFeedback({
+        type: "success",
+        message: data.message || `Document successfully sent to ${document.email}`,
+      });
+    } catch (err: any) {
+      setEmailFeedback({
+        type: "error",
+        message: err.message || "Failed to dispatch email",
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
       <div className="relative w-full max-w-[760px] bg-white rounded-[8px] border border-slate-200 shadow-2xl overflow-hidden my-auto animate-in zoom-in-95 duration-150">
@@ -118,6 +156,23 @@ export default function DocumentPreviewModal({
           </div>
 
           <div className="flex items-center gap-2">
+            {document.email && (
+              <button
+                type="button"
+                onClick={handleSendEmail}
+                disabled={isSendingEmail}
+                className="h-[30px] max-h-[34px] px-3 rounded-[6px] border border-purple-200 bg-purple-50 hover:bg-purple-100/80 text-[#6024a8] text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                title={`Send email with attachment to ${document.email}`}
+              >
+                {isSendingEmail ? (
+                  <div className="w-3.5 h-3.5 border-2 border-[#6024a8] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Mail size={13} />
+                )}
+                <span>{isSendingEmail ? "Sending..." : "Send Email"}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handlePrint}
@@ -138,6 +193,32 @@ export default function DocumentPreviewModal({
         </div>
 
         {/* Printable Document Sheet */}
+        {emailFeedback && (
+          <div
+            className={`px-5 py-2.5 text-[12px] flex items-center justify-between border-b ${
+              emailFeedback.type === "success"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                : "bg-rose-50 text-rose-700 border-rose-100"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {emailFeedback.type === "success" ? (
+                <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+              ) : (
+                <AlertCircle size={14} className="text-rose-600 shrink-0" />
+              )}
+              <span>{emailFeedback.message}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEmailFeedback(null)}
+              className="text-slate-400 hover:text-slate-600 cursor-pointer text-[11px]"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         <div className="p-6 sm:p-8 space-y-6 text-slate-800 bg-white" id="printable-document">
           {/* Header Row: Company Brand + Document Title */}
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200">
@@ -246,8 +327,14 @@ export default function DocumentPreviewModal({
                     <td className="py-2.5 px-3 text-right text-slate-700">
                       ₹{Number(item.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-slate-500">
-                      {item.discount > 0 ? `₹${Number(item.discount).toLocaleString("en-IN")}` : "—"}
+                    <td className="py-2.5 px-3 text-right">
+                      {item.discount > 0 ? (
+                        <span className="text-emerald-600 font-medium">
+                          ₹{Number(item.discount).toLocaleString("en-IN")}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="py-2.5 px-3 text-right font-medium text-slate-900">
                       ₹{Number(item.subtotal || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
@@ -266,7 +353,7 @@ export default function DocumentPreviewModal({
                 </span>
               </div>
               {totalDiscount > 0 && (
-                <div className="w-60 flex justify-between text-rose-600">
+                <div className="w-60 flex justify-between text-emerald-600 font-medium">
                   <span>Total Discount:</span>
                   <span>-₹{totalDiscount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                 </div>

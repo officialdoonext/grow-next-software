@@ -591,7 +591,9 @@ export default function AddInvoiceModal({
                           step="0.01"
                           value={item.discount}
                           onChange={(e) => handleItemChange(idx, "discount", e.target.value)}
-                          className="w-full h-[28px] px-2 text-right bg-slate-50/60 focus:bg-white border border-slate-200 rounded-[4px] text-[12px] text-slate-800 focus:outline-none focus:border-[#6024a8]"
+                          className={`w-full h-[28px] px-2 text-right bg-slate-50/60 focus:bg-white border border-slate-200 rounded-[4px] text-[12px] ${
+                            Number(item.discount) > 0 ? "text-emerald-600 font-medium border-emerald-200 bg-emerald-50/30" : "text-slate-800"
+                          } focus:outline-none focus:border-[#6024a8]`}
                         />
                       </td>
                       <td className="py-1.5 px-2.5 text-right font-medium text-slate-800">
@@ -613,7 +615,14 @@ export default function AddInvoiceModal({
 
               {/* Subtotal Bar */}
               <div className="p-2.5 bg-[#faf9fd] border-t border-slate-200 flex justify-between items-center text-[12px]">
-                <span className="text-slate-500 font-medium">Total Bill Amount:</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-500 font-medium">Total Bill Amount:</span>
+                  {items.reduce((acc, it) => acc + (Number(it.discount) || 0), 0) > 0 && (
+                    <span className="text-[11px] text-emerald-700 font-medium bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-[4px]">
+                      Saved: ₹{items.reduce((acc, it) => acc + (Number(it.discount) || 0), 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[13.5px] font-medium text-[#6024a8]">
                   ₹{Number(amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
