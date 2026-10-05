@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
           address: udata.address || "",
           gstin: udata.gstin || "",
           logoUrl: udata.logoUrl || "",
+          signatureUrl: udata.signatureUrl || "",
         };
       }
     } catch (profileErr) {

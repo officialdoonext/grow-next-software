@@ -18,6 +18,7 @@ import {
   Sparkles,
   FileText,
   ShieldCheck,
+  PenTool,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -40,6 +41,12 @@ export default function SettingsPage() {
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Digital Signature handling
+  const [signatureUrl, setSignatureUrl] = useState("");
+  const [selectedSignatureFile, setSelectedSignatureFile] = useState<File | null>(null);
+  const [signaturePreview, setSignaturePreview] = useState<string>("");
+  const signatureInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -65,6 +72,10 @@ export default function SettingsPage() {
           if (p.logoUrl) {
             setLogoUrl(p.logoUrl);
             setLogoPreview(p.logoUrl);
+          }
+          if (p.signatureUrl) {
+            setSignatureUrl(p.signatureUrl);
+            setSignaturePreview(p.signatureUrl);
           }
         }
       } catch (err) {
@@ -99,6 +110,28 @@ export default function SettingsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleSignatureFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select a valid image file for digital signature (PNG, JPG, SVG, WebP).");
+      return;
+    }
+
+    setSelectedSignatureFile(file);
+    const objectUrl = URL.createObjectURL(file);
+    setSignaturePreview(objectUrl);
+    setError(null);
+  };
+
+  const handleRemoveSignature = () => {
+    setSelectedSignatureFile(null);
+    setSignaturePreview("");
+    setSignatureUrl("");
+    if (signatureInputRef.current) signatureInputRef.current.value = "";
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -110,6 +143,7 @@ export default function SettingsPage() {
       if (!savedEmail) throw new Error("User session not found");
 
       let finalLogoUrl = logoUrl;
+      let finalSignatureUrl = signatureUrl;
 
       // 1. If a new logo file was selected, upload it via media integration API
       if (selectedLogoFile) {
@@ -131,7 +165,27 @@ export default function SettingsPage() {
         setLogoUrl(finalLogoUrl);
       }
 
-      // 2. Save profile settings to backend
+      // 2. If a new digital signature file was selected, upload it via media integration API
+      if (selectedSignatureFile) {
+        const sigFormData = new FormData();
+        sigFormData.append("file", selectedSignatureFile);
+        sigFormData.append("mediaType", "image");
+
+        const sigUploadRes = await fetch(`/api/media/upload?email=${encodeURIComponent(savedEmail)}`, {
+          method: "POST",
+          body: sigFormData,
+        });
+
+        const sigUploadData = await sigUploadRes.json();
+        if (!sigUploadRes.ok || !sigUploadData.success || !sigUploadData.url) {
+          throw new Error(sigUploadData.error || "Failed to upload digital signature to cloud storage.");
+        }
+
+        finalSignatureUrl = sigUploadData.url;
+        setSignatureUrl(finalSignatureUrl);
+      }
+
+      // 3. Save profile settings to backend
       const res = await fetch(`/api/settings/profile?email=${encodeURIComponent(savedEmail)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,6 +197,7 @@ export default function SettingsPage() {
           address: address.trim(),
           gstin: gstin.trim(),
           logoUrl: finalLogoUrl,
+          signatureUrl: finalSignatureUrl,
         }),
       });
 
@@ -151,11 +206,17 @@ export default function SettingsPage() {
         throw new Error(data.error || "Failed to save profile settings");
       }
 
-      // 3. Update localStorage and broadcast event for real-time header & sidebar update
+      // 4. Update localStorage and broadcast events
       if (finalLogoUrl) {
         localStorage.setItem("grownext_user_logo", finalLogoUrl);
       } else {
         localStorage.removeItem("grownext_user_logo");
+      }
+
+      if (finalSignatureUrl) {
+        localStorage.setItem("grownext_user_signature", finalSignatureUrl);
+      } else {
+        localStorage.removeItem("grownext_user_signature");
       }
 
       window.dispatchEvent(
@@ -164,8 +225,15 @@ export default function SettingsPage() {
         })
       );
 
-      setSuccessMessage("Profile details and company logo updated successfully!");
+      window.dispatchEvent(
+        new CustomEvent("grownext_signature_updated", {
+          detail: { signatureUrl: finalSignatureUrl },
+        })
+      );
+
+      setSuccessMessage("Profile details, company logo, and digital signature updated successfully!");
       setSelectedLogoFile(null);
+      setSelectedSignatureFile(null);
     } catch (err: any) {
       setError(err.message || "Failed to save settings");
     } finally {
@@ -293,7 +361,79 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* 4. Profile Details Section */}
+            {/* 4. Digital Signature Section */}
+            <div className="bg-white rounded-[8px] border border-slate-200/90 p-5 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <h3 className="text-[14.5px] font-medium text-slate-800 flex items-center gap-2">
+                    <PenTool size={16} className="text-[#6024a8]" />
+                    <span>Digital Signature</span>
+                  </h3>
+                  <p className="text-[11.5px] text-slate-400 mt-0.5">
+                    Upload your official digital signature. It will be printed directly above the Authorized Signatory section in quotations, invoices, and exported PDFs.
+                  </p>
+                </div>
+                <span className="text-[10.5px] text-[#6024a8] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-[4px] font-medium">
+                  Cloud Media Upload
+                </span>
+              </div>
+
+              <input
+                ref={signatureInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleSignatureFileChange}
+                className="hidden"
+              />
+
+              <div className="flex flex-col sm:flex-row items-center gap-4">
+                {/* Signature Preview Container */}
+                <div className="w-48 h-20 rounded-[6px] border-2 border-dashed border-slate-200 bg-[#f8fafc] flex items-center justify-center overflow-hidden shrink-0 relative p-2">
+                  {signaturePreview ? (
+                    <img
+                      src={signaturePreview}
+                      alt="Digital Signature Preview"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center text-slate-400 text-center gap-1">
+                      <PenTool size={20} className="opacity-60" />
+                      <span className="text-[10px]">No Digital Signature</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Signature Action Buttons */}
+                <div className="flex-1 space-y-2 text-center sm:text-left">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <button
+                      type="button"
+                      onClick={() => signatureInputRef.current?.click()}
+                      className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Upload size={13} />
+                      <span>{signaturePreview ? "Change Signature" : "Choose Signature"}</span>
+                    </button>
+
+                    {signaturePreview && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveSignature}
+                        className="h-[34px] max-h-[34px] px-3 rounded-[6px] bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                        <span>Remove Signature</span>
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Transparent PNG recommended (also supports JPG, WebP, SVG). Uploads to your configured media integration (ImageKit or Cloudinary) upon clicking Save.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Profile Details Section */}
             <div className="bg-white rounded-[8px] border border-slate-200/90 p-5 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)] space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
@@ -438,7 +578,7 @@ export default function SettingsPage() {
                 ) : (
                   <>
                     <CheckCircle2 size={14} />
-                    <span>Save Profile &amp; Logo</span>
+                    <span>Save Profile, Logo &amp; Signature</span>
                   </>
                 )}
               </button>

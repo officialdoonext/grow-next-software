@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
           address: "",
           gstin: "",
           logoUrl: "",
+          signatureUrl: "",
         },
       });
     }
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, mobile, businessName, city, address, gstin, logoUrl } = body;
+    const { name, mobile, businessName, city, address, gstin, logoUrl, signatureUrl } = body;
 
     const userDocRef = doc(db, "users", userEmail);
     const existingSnap = await getDoc(userDocRef);
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
       address: address !== undefined ? String(address).trim() : existingData.address || "",
       gstin: gstin !== undefined ? String(gstin).trim() : existingData.gstin || "",
       logoUrl: logoUrl !== undefined ? String(logoUrl).trim() : existingData.logoUrl || "",
+      signatureUrl: signatureUrl !== undefined ? String(signatureUrl).trim() : existingData.signatureUrl || "",
       email: userEmail,
       updatedAt: new Date().toISOString(),
     };

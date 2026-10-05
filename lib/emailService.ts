@@ -246,6 +246,7 @@ export interface DocumentEmailPayload {
     address?: string;
     gstin?: string;
     logoUrl?: string;
+    signatureUrl?: string;
   };
 }
 
@@ -284,6 +285,7 @@ function buildExactPreviewHtml(payload: DocumentEmailPayload): string {
   const companyEmail = profile?.email || "";
   const companyAddress = profile?.address || profile?.city || "";
   const companyGstin = profile?.gstin || "";
+  const signatureUrl = profile?.signatureUrl || "";
 
   const items = doc.items && doc.items.length > 0 ? doc.items : [
     {
@@ -636,9 +638,23 @@ function buildExactPreviewHtml(payload: DocumentEmailPayload): string {
       width: 192px;
     }
 
+    .signatory-stamp-container {
+      height: 48px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .digital-signature-img {
+      max-height: 48px;
+      max-width: 160px;
+      object-fit: contain;
+    }
+
     .signatory-line {
       border-bottom: 1px solid #cbd5e1;
-      height: 32px;
+      height: 6px;
       margin-bottom: 6px;
     }
 
@@ -663,9 +679,11 @@ function buildExactPreviewHtml(payload: DocumentEmailPayload): string {
     <!-- Header Row -->
     <div class="header-row">
       <div class="company-info">
-        <div class="logo-container">
-          <img src="${companyLogo}" class="company-logo" alt="${companyName}" />
-        </div>
+        ${companyLogo ? `
+          <div class="logo-container">
+            <img src="${companyLogo}" class="company-logo" alt="${companyName}" onerror="this.parentElement.style.display='none'" />
+          </div>
+        ` : ""}
         <h2 class="company-name">${companyName}</h2>
         ${companyAddress ? `<p class="company-address">${companyAddress}</p>` : ""}
         <div class="company-meta-row">
@@ -769,7 +787,7 @@ function buildExactPreviewHtml(payload: DocumentEmailPayload): string {
             return `
               <div class="custom-attr-card">
                 <span class="custom-attr-label">${displayKey}</span>
-                ${isImage ? `<img src="${strVal}" alt="${displayKey}" style="height: 70px; max-width: 100%; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" />` : `<span style="font-weight: 500; color: #1e293b;">${strVal}</span>`}
+                ${isImage ? `<img src="${strVal}" alt="${displayKey}" style="height: 70px; max-width: 100%; object-fit: contain; border-radius: 4px; border: 1px solid #e2e8f0; display: block;" onerror="this.style.display='none'" />` : `<span style="font-weight: 500; color: #1e293b;">${strVal}</span>`}
               </div>
             `;
           }).join("")}
@@ -788,6 +806,11 @@ function buildExactPreviewHtml(payload: DocumentEmailPayload): string {
     <!-- Authorized Signatory -->
     <div class="signatory-row">
       <div class="signatory-box">
+        ${signatureUrl ? `
+          <div class="signatory-stamp-container">
+            <img src="${signatureUrl}" alt="Digital Signature" class="digital-signature-img" onerror="this.parentElement.style.display='none'" />
+          </div>
+        ` : ""}
         <div class="signatory-line"></div>
         <span class="signatory-title">Authorized Signatory</span>
         <span class="signatory-company">${companyName}</span>
@@ -1008,7 +1031,7 @@ function buildDocumentEmailHtml(payload: DocumentEmailPayload): string {
             <td style="background: linear-gradient(135deg, #4c1d95 0%, #6024a8 50%, #7c3aed 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
               ${profile?.logoUrl ? `
                 <div style="background: #ffffff; display: inline-block; padding: 6px 14px; border-radius: 6px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <img src="${profile.logoUrl}" style="max-height: 38px; max-width: 170px; display: block;" alt="${companyName} Logo" />
+                  <img src="${profile.logoUrl}" style="max-height: 38px; max-width: 170px; display: block;" alt="${companyName} Logo" onerror="this.parentElement.style.display='none'" />
                 </div>
               ` : `
                 <div style="display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 20px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.25);">

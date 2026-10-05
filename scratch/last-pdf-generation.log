@@ -14,3 +14,11 @@ SUCCESS: Puppeteer generated PDF with 464519 bytes
 Attempting puppeteer.launch with: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
 SUCCESS: Puppeteer generated PDF with 464519 bytes
 
+[2026-10-05T06:36:52.658Z] Browser path: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+Attempting puppeteer.launch with: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+SUCCESS: Puppeteer generated PDF with 479843 bytes
+
+[2026-10-05T06:41:11.972Z] Browser path: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+Attempting puppeteer.launch with: C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe
+SUCCESS: Puppeteer generated PDF with 441203 bytes
+

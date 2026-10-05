@@ -82,6 +82,7 @@ export default function DocumentPreviewModal({
   const companyEmail = profile?.email || "";
   const companyAddress = profile?.address || profile?.city || "";
   const companyGstin = profile?.gstin || "";
+  const companySignature = profile?.signatureUrl || (typeof window !== "undefined" ? localStorage.getItem("grownext_user_signature") : null) || "";
 
   const items: LineItem[] = Array.isArray(document.items) && document.items.length > 0
     ? document.items
@@ -224,13 +225,19 @@ export default function DocumentPreviewModal({
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200">
             {/* Left: Company Logo & Info */}
             <div className="space-y-1.5 max-w-sm">
-              <div className="h-10 flex items-center mb-2">
-                <img
-                  src={companyLogo}
-                  alt={companyName}
-                  className="max-h-10 max-w-[170px] object-contain"
-                />
-              </div>
+              {companyLogo ? (
+                <div className="h-10 flex items-center mb-2">
+                  <img
+                    src={companyLogo}
+                    alt={companyName}
+                    className="max-h-10 max-w-[170px] object-contain"
+                    onError={(e) => {
+                      const parent = (e.target as HTMLElement).parentElement;
+                      if (parent) parent.style.display = "none";
+                    }}
+                  />
+                </div>
+              ) : null}
               <h2 className="text-[15px] font-medium text-slate-900 leading-tight">
                 {companyName}
               </h2>
@@ -392,6 +399,10 @@ export default function DocumentPreviewModal({
                             src={strVal}
                             alt={displayKey}
                             className="h-20 w-auto max-w-full object-contain rounded-[4px] border border-slate-200"
+                            onError={(e) => {
+                              const parent = (e.target as HTMLElement).parentElement;
+                              if (parent) parent.style.display = "none";
+                            }}
                           />
                         </div>
                       ) : isMedia ? (
@@ -421,8 +432,21 @@ export default function DocumentPreviewModal({
           {/* Signature / Authorization Line */}
           <div className="pt-8 flex justify-end">
             <div className="text-center w-48 space-y-1">
-              <div className="border-b border-slate-300 h-8" />
-              <span className="text-[11px] text-slate-400 font-medium block">
+              {companySignature ? (
+                <div className="h-12 flex items-end justify-center mb-1">
+                  <img
+                    src={companySignature}
+                    alt="Digital Signature"
+                    className="max-h-12 max-w-[160px] object-contain"
+                    onError={(e) => {
+                      const parent = (e.target as HTMLElement).parentElement;
+                      if (parent) parent.style.display = "none";
+                    }}
+                  />
+                </div>
+              ) : null}
+              <div className="border-b border-slate-300" />
+              <span className="text-[11px] text-slate-400 font-medium block pt-0.5">
                 Authorized Signatory
               </span>
               <span className="text-[10.5px] text-slate-500 block truncate font-medium">
