@@ -33,9 +33,7 @@ export function subscribeToUserCollection<T = DocumentData>(
   const colRef = collection(db, collectionName);
   const q = query(
     colRef,
-    where("userId", "==", normEmail),
-    orderBy("createdAt", "desc"),
-    limit(PAGE_SIZE)
+    where("userId", "==", normEmail)
   );
 
   return onSnapshot(
@@ -48,7 +46,14 @@ export function subscribeToUserCollection<T = DocumentData>(
           id: docSnap.id,
         });
       });
-      onUpdate(results);
+      // Sort recent first (createdAt descending)
+      results.sort((a: any, b: any) => {
+        const timeA = new Date(a.createdAt || 0).getTime();
+        const timeB = new Date(b.createdAt || 0).getTime();
+        return timeB - timeA;
+      });
+      // Strictly limit to 24 recent items
+      onUpdate(results.slice(0, PAGE_SIZE));
     },
     (err) => {
       console.warn(`[Firestore subscription error in ${collectionName}]`, err);
