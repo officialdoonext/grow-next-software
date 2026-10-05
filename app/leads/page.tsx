@@ -23,6 +23,9 @@ import {
   ChevronsUpDown,
   Sparkles,
   BarChart2,
+  ExternalLink,
+  Image as ImageIcon,
+  Music,
 } from "lucide-react";
 
 export interface Lead {
@@ -309,13 +312,51 @@ export default function LeadsPage() {
                 );
               }
 
+              const strVal = String(v || "");
+              const isMedia = strVal.startsWith("http://") || strVal.startsWith("https://");
+              const isImage = isMedia && (strVal.match(/\.(jpeg|jpg|gif|png|webp)/i) || strVal.includes("imagekit.io") || strVal.includes("cloudinary.com"));
+
+              if (isImage) {
+                return (
+                  <a
+                    key={k}
+                    href={strVal}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-200 text-[10.5px] hover:bg-purple-100 transition-colors shrink-0"
+                    title={`View ${displayKey}`}
+                  >
+                    <img src={strVal} alt={displayKey} className="w-4 h-4 rounded-[2px] object-cover shrink-0" />
+                    <span className="capitalize max-w-[65px] truncate">{displayKey}</span>
+                  </a>
+                );
+              }
+
+              if (isMedia) {
+                return (
+                  <a
+                    key={k}
+                    href={strVal}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-200 text-[10.5px] hover:bg-purple-100 transition-colors shrink-0"
+                    title={`Open ${displayKey}`}
+                  >
+                    <Music size={11} className="shrink-0" />
+                    <span className="capitalize max-w-[65px] truncate">{displayKey}</span>
+                  </a>
+                );
+              }
+
               return (
                 <span
                   key={k}
                   className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8] min-w-0 max-w-[95px] overflow-hidden truncate"
                 >
                   <span className="capitalize text-slate-400 mr-1 shrink-0">{displayKey}:</span>
-                  <span className="font-medium truncate block">{String(v)}</span>
+                  <span className="font-medium truncate block">{strVal}</span>
                 </span>
               );
             })}
@@ -477,11 +518,39 @@ export default function LeadsPage() {
                         {boolVal ? "ON" : "OFF"}
                       </span>
                     </div>
-                  ) : (
-                    <span className="text-[11.5px] font-medium text-slate-800">
-                      {v !== undefined && v !== null && v !== "" ? String(v) : "—"}
-                    </span>
-                  )}
+                  ) : (() => {
+                    const strVal = String(v || "");
+                    const isMedia = strVal.startsWith("http://") || strVal.startsWith("https://");
+                    const isImage = isMedia && (strVal.match(/\.(jpeg|jpg|gif|png|webp)/i) || strVal.includes("imagekit.io") || strVal.includes("cloudinary.com"));
+
+                    if (isImage) {
+                      return (
+                        <div className="flex items-center gap-1.5">
+                          <img src={strVal} alt={displayKey} className="w-6 h-6 rounded-[3px] object-cover border border-purple-200" />
+                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#6024a8] hover:underline flex items-center gap-0.5">
+                            <span>View</span>
+                            <ExternalLink size={9} />
+                          </a>
+                        </div>
+                      );
+                    }
+                    if (isMedia) {
+                      return (
+                        <div className="flex items-center gap-1">
+                          <Music size={12} className="text-[#6024a8]" />
+                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#6024a8] hover:underline flex items-center gap-0.5">
+                            <span>Play</span>
+                            <ExternalLink size={9} />
+                          </a>
+                        </div>
+                      );
+                    }
+                    return (
+                      <span className="text-[11.5px] font-medium text-slate-800">
+                        {v !== undefined && v !== null && v !== "" ? String(v) : "—"}
+                      </span>
+                    );
+                  })()}
                 </div>
               );
             })}

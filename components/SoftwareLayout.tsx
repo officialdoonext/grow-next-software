@@ -366,7 +366,7 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-3.5 sm:p-5 lg:p-6 max-w-7xl w-full">
+        <main className="flex-1 p-3.5 sm:p-3 lg:p-3 w-full">
           {!hideDefaultHeader && (
             <div className="mb-5 flex items-center justify-between">
               <h1 className="text-[18px] font-medium text-slate-900">

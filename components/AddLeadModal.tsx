@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Briefcase, Phone, Mail, X, AlertCircle, RefreshCw, Check, Sparkles } from "lucide-react";
 import { CustomAttribute } from "./AddCustomAttributeModal";
+import MediaUploadInput from "@/components/MediaUploadInput";
 
 interface AddLeadModalProps {
   isOpen: boolean;
@@ -439,6 +440,26 @@ export default function AddLeadModal({
                             </option>
                           ))}
                         </select>
+                      )}
+
+                      {/* 5. Image Upload */}
+                      {attr.dataType === "Image" && (
+                        <MediaUploadInput
+                          mediaType="image"
+                          value={currentValue || ""}
+                          onChange={(url) => handleCustomFieldChange(attr.key, url)}
+                          placeholder={`Upload ${attr.name}...`}
+                        />
+                      )}
+
+                      {/* 6. Audio Upload */}
+                      {attr.dataType === "Audio" && (
+                        <MediaUploadInput
+                          mediaType="audio"
+                          value={currentValue || ""}
+                          onChange={(url) => handleCustomFieldChange(attr.key, url)}
+                          placeholder={`Upload ${attr.name}...`}
+                        />
                       )}
                     </div>
                   );

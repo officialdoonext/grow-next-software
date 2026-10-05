@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const validDataTypes = ["String", "Integer", "Boolean", "List"];
+    const validDataTypes = ["String", "Integer", "Boolean", "List", "Image", "Audio"];
     if (!validDataTypes.includes(dataType)) {
       return NextResponse.json(
         { success: false, error: `Invalid data type. Must be one of: ${validDataTypes.join(", ")}` },

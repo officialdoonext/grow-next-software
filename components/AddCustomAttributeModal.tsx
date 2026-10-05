@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Plus, Check, RefreshCw, AlertCircle, Sparkles, Edit3 } from "lucide-react";
 
-export type CustomDataType = "String" | "Integer" | "Boolean" | "List";
+export type CustomDataType = "String" | "Integer" | "Boolean" | "List" | "Image" | "Audio";
 
 export interface CustomAttribute {
   id: string;
@@ -275,6 +275,8 @@ export default function AddCustomAttributeModal({
               <option value="Integer">Integer (Whole numbers, counts, limits)</option>
               <option value="Boolean">Boolean (True / False or Yes / No)</option>
               <option value="List">List (Selectable dropdown options)</option>
+              <option value="Image">Image (Photo, document scan, logo, attachment)</option>
+              <option value="Audio">Audio (Voice note, call recording, sound file)</option>
             </select>
           </div>
 
@@ -424,6 +426,18 @@ export default function AddCustomAttributeModal({
                 value={defaultValue}
                 onChange={(e) => setDefaultValue(e.target.value)}
                 placeholder="e.g. 0 or 100 (optional)"
+                className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+              />
+            ) : dataType === "Image" || dataType === "Audio" ? (
+              <input
+                type="url"
+                value={defaultValue}
+                onChange={(e) => setDefaultValue(e.target.value)}
+                placeholder={
+                  dataType === "Image"
+                    ? "Default image URL (optional, e.g. https://...)"
+                    : "Default audio URL (optional, e.g. https://...)"
+                }
                 className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
               />
             ) : (

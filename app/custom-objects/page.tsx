@@ -26,6 +26,8 @@ import {
   RefreshCw,
   CheckCircle2,
   BarChart2,
+  Image as ImageIcon,
+  Music,
 } from "lucide-react";
 
 type EntityKey = "leads" | "customers" | "quotations" | "invoices";
@@ -454,6 +456,20 @@ export default function CustomObjectsPage() {
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-100 text-[11px] font-medium">
             <List size={11} />
             <span>List</span>
+          </span>
+        );
+      case "Image":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-violet-50 text-violet-700 border border-violet-100 text-[11px] font-medium">
+            <ImageIcon size={11} />
+            <span>Image</span>
+          </span>
+        );
+      case "Audio":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-100 text-[11px] font-medium">
+            <Music size={11} />
+            <span>Audio</span>
           </span>
         );
       default:

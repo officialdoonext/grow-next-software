@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check, Sparkles, Edit2 } from "lucide-react";
 import { CustomAttribute } from "./AddCustomAttributeModal";
+import MediaUploadInput from "@/components/MediaUploadInput";
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -439,6 +440,26 @@ export default function AddCustomerModal({
                             </option>
                           ))}
                         </select>
+                      )}
+
+                      {/* 5. Image Upload */}
+                      {attr.dataType === "Image" && (
+                        <MediaUploadInput
+                          mediaType="image"
+                          value={currentValue || ""}
+                          onChange={(url) => handleCustomFieldChange(attr.key, url)}
+                          placeholder={`Upload ${attr.name}...`}
+                        />
+                      )}
+
+                      {/* 6. Audio Upload */}
+                      {attr.dataType === "Audio" && (
+                        <MediaUploadInput
+                          mediaType="audio"
+                          value={currentValue || ""}
+                          onChange={(url) => handleCustomFieldChange(attr.key, url)}
+                          placeholder={`Upload ${attr.name}...`}
+                        />
                       )}
                     </div>
                   );
