@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
 import AddCustomAttributeModal, { CustomAttribute } from "@/components/AddCustomAttributeModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
@@ -21,6 +21,10 @@ import {
   GripVertical,
   Edit3,
   MoveVertical,
+  ChevronUp,
+  ChevronDown,
+  RefreshCw,
+  CheckCircle2,
 } from "lucide-react";
 
 type EntityKey = "leads" | "customers" | "quotations" | "invoices";
@@ -59,6 +63,59 @@ const ENTITIES: EntityConfig[] = [
   },
 ];
 
+interface DragState {
+  activeId: string;
+  activeIdx: number;
+  currentY: number;
+  targetIdx: number;
+  heights: number[];
+  centers: number[];
+  isDropping: boolean;
+}
+
+function computeDisplacement(activeIdx: number, targetIdx: number, heights: number[]): number {
+  if (activeIdx === targetIdx) return 0;
+  let dist = 0;
+  if (targetIdx > activeIdx) {
+    for (let i = activeIdx + 1; i <= targetIdx; i++) {
+      dist += heights[i] || 56;
+    }
+    return dist;
+  } else {
+    for (let i = targetIdx; i < activeIdx; i++) {
+      dist += heights[i] || 56;
+    }
+    return -dist;
+  }
+}
+
+function getTargetIndex(dragCenter: number, centers: number[], currentTarget: number): number {
+  let best = currentTarget;
+  const buffer = 8; // 8px deadband hysteresis buffer prevents micro-jitter
+
+  // Check moving down
+  for (let i = currentTarget + 1; i < centers.length; i++) {
+    const boundary = (centers[i - 1] + centers[i]) / 2 + buffer;
+    if (dragCenter > boundary) {
+      best = i;
+    } else {
+      break;
+    }
+  }
+
+  // Check moving up
+  for (let i = currentTarget - 1; i >= 0; i--) {
+    const boundary = (centers[i + 1] + centers[i]) / 2 - buffer;
+    if (dragCenter < boundary) {
+      best = i;
+    } else {
+      break;
+    }
+  }
+
+  return best;
+}
+
 export default function CustomObjectsPage() {
   const [selectedEntity, setSelectedEntity] = useState<EntityKey>("customers");
   const [attributes, setAttributes] = useState<CustomAttribute[]>([]);
@@ -73,9 +130,13 @@ export default function CustomObjectsPage() {
   const [attributeToDelete, setAttributeToDelete] = useState<CustomAttribute | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Drag and drop states
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  // Shopify-grade butter-smooth Pointer Drag State
+  const [dragState, setDragState] = useState<DragState | null>(null);
   const [isReordering, setIsReordering] = useState(false);
+  const [justReordered, setJustReordered] = useState(false);
+
+  // DOM references to list items for dynamic height calculation
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Subscribe to real-time custom attributes for the authenticated user
   useEffect(() => {
@@ -131,9 +192,11 @@ export default function CustomObjectsPage() {
 
   const currentEntityConfig = ENTITIES.find((e) => e.key === selectedEntity)!;
 
-  // Handle Drag & Drop reordering
+  // Handle reordering persistence
   const handleReorder = async (sourceIndex: number, targetIndex: number) => {
-    if (sourceIndex === targetIndex) return;
+    if (sourceIndex === targetIndex || sourceIndex < 0 || targetIndex < 0 || targetIndex >= entityAttributes.length) {
+      return;
+    }
 
     const updated = [...entityAttributes];
     const [movedItem] = updated.splice(sourceIndex, 1);
@@ -151,6 +214,9 @@ export default function CustomObjectsPage() {
     });
 
     setIsReordering(true);
+    setJustReordered(true);
+    setTimeout(() => setJustReordered(false), 2000);
+
     try {
       const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
       const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
@@ -167,8 +233,169 @@ export default function CustomObjectsPage() {
       console.error("Failed to persist attribute reordering", err);
     } finally {
       setIsReordering(false);
-      setDraggedIndex(null);
     }
+  };
+
+  // Shopify-style butter smooth Pointer Down handler
+  const handlePointerDown = (e: React.PointerEvent, index: number, id: string) => {
+    if (e.button !== 0 || searchQuery.trim()) return; // Only primary button and when not filtered
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    // Measure exact element rects and heights
+    const rects = itemRefs.current.map((el) => (el ? el.getBoundingClientRect() : null));
+    const heights = rects.map((r, i) => {
+      if (r) {
+        if (i < rects.length - 1 && rects[i + 1]) {
+          return rects[i + 1]!.top - r.top;
+        }
+        return r.height + 8;
+      }
+      return 56;
+    });
+
+    const centers = rects.map((r, i) => {
+      if (r) return r.top + r.height / 2;
+      return i * 56 + 28;
+    });
+
+    const startY = e.clientY;
+    let currentTarget = index;
+    let latestDeltaY = 0;
+    let rafId: number | null = null;
+    let isTerminated = false;
+
+    setDragState({
+      activeId: id,
+      activeIdx: index,
+      currentY: 0,
+      targetIdx: index,
+      heights,
+      centers,
+      isDropping: false,
+    });
+
+    const updateFrame = () => {
+      if (isTerminated) return;
+      const dragCenter = centers[index] + latestDeltaY;
+      const nextTarget = getTargetIndex(dragCenter, centers, currentTarget);
+      currentTarget = nextTarget;
+
+      setDragState((prev) =>
+        prev
+          ? {
+              ...prev,
+              currentY: latestDeltaY,
+              targetIdx: nextTarget,
+            }
+          : null
+      );
+      rafId = null;
+    };
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      latestDeltaY = moveEvent.clientY - startY;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateFrame);
+      }
+    };
+
+    const onPointerUp = () => {
+      if (isTerminated) return;
+      isTerminated = true;
+
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      document.body.style.userSelect = "";
+      document.body.style.overflow = "";
+
+      const finalTarget = currentTarget;
+      const landingOffset = computeDisplacement(index, finalTarget, heights);
+
+      // Smooth glide to final target slot
+      setDragState((prev) =>
+        prev
+          ? {
+              ...prev,
+              isDropping: true,
+              currentY: landingOffset,
+              targetIdx: finalTarget,
+            }
+          : null
+      );
+
+      setTimeout(() => {
+        if (finalTarget !== index) {
+          handleReorder(index, finalTarget);
+        }
+        setDragState(null);
+      }, 200);
+    };
+
+    document.body.style.userSelect = "none";
+    document.body.style.overflow = "hidden";
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
+  };
+
+  // Calculate 3D GPU-accelerated Transform for each item during drag
+  const getItemTransform = (i: number) => {
+    if (!dragState) {
+      return {
+        transform: "translate3d(0, 0, 0)",
+        transition: "transform 220ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease",
+        zIndex: 1,
+      };
+    }
+
+    const { activeIdx, currentY, targetIdx, heights, isDropping } = dragState;
+
+    if (i === activeIdx) {
+      return {
+        transform: `translate3d(0, ${currentY}px, 0)`,
+        transition: isDropping
+          ? "transform 200ms cubic-bezier(0.2, 0, 0, 1), box-shadow 200ms ease"
+          : "none",
+        zIndex: 50,
+      };
+    }
+
+    const activeHeight = heights[activeIdx] || 56;
+
+    if (activeIdx < targetIdx && i > activeIdx && i <= targetIdx) {
+      return {
+        transform: `translate3d(0, -${activeHeight}px, 0)`,
+        transition: "transform 220ms cubic-bezier(0.2, 0, 0, 1)",
+        zIndex: 1,
+      };
+    }
+
+    if (activeIdx > targetIdx && i < activeIdx && i >= targetIdx) {
+      return {
+        transform: `translate3d(0, ${activeHeight}px, 0)`,
+        transition: "transform 220ms cubic-bezier(0.2, 0, 0, 1)",
+        zIndex: 1,
+      };
+    }
+
+    return {
+      transform: "translate3d(0, 0, 0)",
+      transition: "transform 220ms cubic-bezier(0.2, 0, 0, 1)",
+      zIndex: 1,
+    };
   };
 
   // Handle Delete with Custom Confirmation
@@ -294,10 +521,10 @@ export default function CustomObjectsPage() {
           <div className="hidden lg:block mt-4 pt-3 border-t border-slate-100 px-2 text-[10.5px] text-slate-400 leading-relaxed space-y-2">
             <div className="flex items-center gap-1.5 text-slate-600 font-medium">
               <MoveVertical size={13} className="text-[#6024a8]" />
-              <span>Drag &amp; Drop Reordering</span>
+              <span>Smooth Auto-Adjust Drag</span>
             </div>
             <p>
-              Reorder attributes by dragging the grip icon. Attributes appear in forms in the exact same position.
+              Drag any handle to reorder. Surrounding items slide out of the way smoothly with zero screen jerking.
             </p>
           </div>
         </div>
@@ -311,11 +538,24 @@ export default function CustomObjectsPage() {
                 {currentEntityConfig.icon}
               </div>
               <div>
-                <h2 className="text-[13.5px] font-medium text-slate-800 leading-tight">
-                  {currentEntityConfig.label} Custom Attributes
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[13.5px] font-medium text-slate-800 leading-tight">
+                    {currentEntityConfig.label} Custom Attributes
+                  </h2>
+                  {isReordering ? (
+                    <span className="inline-flex items-center gap-1 text-[10.5px] text-[#6024a8] bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-[4px] font-medium animate-pulse">
+                      <RefreshCw size={10} className="animate-spin" />
+                      <span>Saving sequence...</span>
+                    </span>
+                  ) : justReordered ? (
+                    <span className="inline-flex items-center gap-1 text-[10.5px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-[4px] font-medium animate-in fade-in duration-200">
+                      <CheckCircle2 size={11} />
+                      <span>Sequence updated</span>
+                    </span>
+                  ) : null}
+                </div>
                 <span className="text-[11px] text-slate-400">
-                  {entityAttributes.length} {entityAttributes.length === 1 ? "attribute" : "attributes"} configured • Drag to reorder
+                  {entityAttributes.length} {entityAttributes.length === 1 ? "attribute" : "attributes"} configured • Drag grip handle to reorder
                 </span>
               </div>
             </div>
@@ -350,7 +590,7 @@ export default function CustomObjectsPage() {
             </div>
           </div>
 
-          {/* Attributes List / Table with Drag-and-Drop */}
+          {/* Attributes List Workspace */}
           {loading ? (
             <div className="bg-white rounded-[6px] border border-slate-200/80 p-8 text-center text-slate-400 text-[12.5px]">
               Loading custom schema...
@@ -379,281 +619,286 @@ export default function CustomObjectsPage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {/* Desktop Table View */}
-              <div className="hidden md:block bg-white rounded-[6px] border border-slate-200/80 overflow-hidden shadow-2xs">
-                <table className="w-full text-left border-collapse text-[12.5px]">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-[#f8fafc] text-[11px] font-medium text-slate-400 uppercase tracking-wider">
-                      <th className="w-10 px-3 py-2.5 text-center">#</th>
-                      <th className="px-4 py-2.5">Attribute Name &amp; Key</th>
-                      <th className="px-4 py-2.5">Data Type</th>
-                      <th className="px-4 py-2.5">List Options / Details</th>
-                      <th className="px-4 py-2.5">Requirement</th>
-                      <th className="px-4 py-2.5">Default Value</th>
-                      <th className="px-4 py-2.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredAttributes.map((item, index) => {
-                      const isDragged = draggedIndex === index;
+            <div className="space-y-2">
+              {/* Desktop Header Bar */}
+              <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2.5 bg-[#f8fafc] rounded-[6px] border border-slate-200/80 text-[11px] font-medium text-slate-400 uppercase tracking-wider select-none">
+                <div className="col-span-1 text-center">Order</div>
+                <div className="col-span-3">Attribute Name &amp; Key</div>
+                <div className="col-span-2">Data Type</div>
+                <div className="col-span-2">List Options</div>
+                <div className="col-span-2">Requirement</div>
+                <div className="col-span-1">Default</div>
+                <div className="col-span-1 text-right">Actions</div>
+              </div>
 
-                      return (
-                        <tr
-                          key={item.id}
-                          draggable={!searchQuery}
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData("text/plain", String(index));
-                            setDraggedIndex(index);
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
-                            handleReorder(fromIdx, index);
-                          }}
-                          className={`transition-colors ${
-                            isDragged ? "opacity-40 bg-purple-50/50" : "hover:bg-slate-50/70"
-                          }`}
-                        >
-                          {/* Grip handle */}
-                          <td className="px-3 py-3 text-center">
-                            <div
-                              title="Drag to reorder"
-                              className="inline-flex items-center justify-center p-1 rounded hover:bg-slate-100 cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600"
+              {/* Butter-Smooth Reorderable List (Desktop & Mobile) */}
+              <div className="relative space-y-2 overflow-x-clip">
+                {filteredAttributes.map((item, index) => {
+                  const isBeingDragged = dragState?.activeIdx === index;
+                  const itemStyle = getItemTransform(index);
+
+                  return (
+                    <div
+                      key={item.id}
+                      ref={(el) => {
+                        itemRefs.current[index] = el;
+                      }}
+                      style={itemStyle}
+                      className={`relative bg-white rounded-[6px] border border-slate-200/80 transition-shadow duration-150 will-change-transform select-none ${
+                        isBeingDragged
+                          ? "shadow-xl border-[#6024a8] ring-1 ring-purple-300 bg-white !z-50 cursor-grabbing"
+                          : "shadow-2xs hover:border-slate-300 hover:shadow-xs"
+                      }`}
+                    >
+                      {/* Desktop Grid Layout */}
+                      <div className="hidden md:grid grid-cols-12 gap-3 items-center px-4 py-2.5 text-[12.5px]">
+                        {/* Order & Drag Handle & Quick Step Controls */}
+                        <div className="col-span-1 flex items-center justify-center gap-1">
+                          <span className="w-5 h-5 rounded-[4px] bg-slate-100 text-slate-500 font-mono text-[10px] font-medium flex items-center justify-center">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+
+                          {/* Dedicated Drag Handle */}
+                          <div
+                            onPointerDown={(e) => handlePointerDown(e, index, item.id)}
+                            title="Drag to reorder"
+                            className="w-6 h-6 rounded-[4px] hover:bg-purple-100 hover:text-[#6024a8] text-slate-400 flex items-center justify-center cursor-grab active:cursor-grabbing transition-all touch-none"
+                          >
+                            <GripVertical size={14} />
+                          </div>
+
+                          {/* Quick Micro Up/Down Arrows */}
+                          <div className="flex flex-col opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => handleReorder(index, index - 1)}
+                              title="Move Up"
+                              className="w-3.5 h-2.5 rounded-[2px] text-slate-400 hover:text-[#6024a8] flex items-center justify-center disabled:opacity-20 cursor-pointer"
                             >
-                              <GripVertical size={14} />
+                              <ChevronUp size={9} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === filteredAttributes.length - 1}
+                              onClick={() => handleReorder(index, index + 1)}
+                              title="Move Down"
+                              className="w-3.5 h-2.5 rounded-[2px] text-slate-400 hover:text-[#6024a8] flex items-center justify-center disabled:opacity-20 cursor-pointer"
+                            >
+                              <ChevronDown size={9} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Attribute Name & Key */}
+                        <div className="col-span-3 min-w-0 pr-2">
+                          <div className="font-medium text-slate-800 text-[12.5px] truncate">
+                            {item.name}
+                          </div>
+                          <div className="text-[10.5px] text-slate-400 font-mono truncate">
+                            {item.key}
+                          </div>
+                        </div>
+
+                        {/* Data Type */}
+                        <div className="col-span-2">
+                          {renderDataTypeBadge(item.dataType)}
+                        </div>
+
+                        {/* Options */}
+                        <div className="col-span-2 min-w-0 pr-2">
+                          {item.dataType === "List" && item.options && item.options.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {item.options.slice(0, 2).map((opt, i) => (
+                                <span
+                                  key={i}
+                                  className="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded-[3px] text-[10.5px] truncate max-w-[90px]"
+                                >
+                                  {opt}
+                                </span>
+                              ))}
+                              {item.options.length > 2 && (
+                                <span className="text-[10px] text-slate-400">
+                                  +{item.options.length - 2}
+                                </span>
+                              )}
                             </div>
-                          </td>
+                          ) : (
+                            <span className="text-slate-300 text-[12px]">—</span>
+                          )}
+                        </div>
 
-                          {/* Attribute Name & Key */}
-                          <td className="px-4 py-3">
-                            <div className="font-medium text-slate-800 text-[12.5px] truncate">
-                              {item.name}
-                            </div>
-                            <div className="text-[10.5px] text-slate-400 font-mono">
-                              {item.key}
-                            </div>
-                          </td>
+                        {/* Requirement */}
+                        <div className="col-span-2">
+                          {item.mandatory ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-100 text-[11px] font-medium">
+                              Mandatory
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600 text-[11px] font-normal">
+                              Optional
+                            </span>
+                          )}
+                        </div>
 
-                          {/* Data Type */}
-                          <td className="px-4 py-3">{renderDataTypeBadge(item.dataType)}</td>
-
-                          {/* Options */}
-                          <td className="px-4 py-3">
-                            {item.dataType === "List" && item.options && item.options.length > 0 ? (
-                              <div className="flex flex-wrap gap-1 max-w-[240px]">
-                                {item.options.slice(0, 3).map((opt, i) => (
-                                  <span
-                                    key={i}
-                                    className="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded-[3px] text-[10.5px]"
-                                  >
-                                    {opt}
-                                  </span>
-                                ))}
-                                {item.options.length > 3 && (
-                                  <span className="px-1 py-0.5 text-slate-400 text-[10px]">
-                                    +{item.options.length - 3} more
-                                  </span>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-slate-300 text-[12px]">—</span>
-                            )}
-                          </td>
-
-                          {/* Mandatory */}
-                          <td className="px-4 py-3">
-                            {item.mandatory ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-100 text-[11px] font-medium">
-                                Mandatory
+                        {/* Default Value */}
+                        <div className="col-span-1 min-w-0 truncate">
+                          {item.dataType === "Boolean" ? (
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`relative inline-flex h-3.5 w-6 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
+                                  item.defaultValue === true || item.defaultValue === "true"
+                                    ? "bg-[#6024a8]"
+                                    : "bg-slate-300"
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow transition duration-200 ${
+                                    item.defaultValue === true || item.defaultValue === "true"
+                                      ? "translate-x-2.5"
+                                      : "translate-x-0"
+                                  }`}
+                                />
                               </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600 text-[11px] font-normal">
-                                Optional
+                              <span className="text-[10px] font-medium text-slate-600">
+                                {item.defaultValue === true || item.defaultValue === "true" ? "ON" : "OFF"}
                               </span>
-                            )}
-                          </td>
+                            </div>
+                          ) : item.defaultValue !== undefined && item.defaultValue !== "" && item.defaultValue !== null ? (
+                            <span className="text-slate-700 text-[11.5px] font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                              {String(item.defaultValue)}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300 text-[11.5px]">—</span>
+                          )}
+                        </div>
 
-                          {/* Default Value */}
-                          <td className="px-4 py-3">
+                        {/* Actions */}
+                        <div className="col-span-1 flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAttributeToEdit(item);
+                              setIsModalOpen(true);
+                            }}
+                            title="Edit Attribute"
+                            className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Edit3 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAttributeToDelete(item)}
+                            title="Delete Attribute"
+                            className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Mobile Card Layout */}
+                      <div className="md:hidden p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-[4px] bg-slate-100 text-slate-600 font-mono text-[10px] font-medium flex items-center justify-center">
+                              {String(index + 1).padStart(2, "0")}
+                            </span>
+
+                            <div
+                              onPointerDown={(e) => handlePointerDown(e, index, item.id)}
+                              title="Drag to reorder"
+                              className="text-slate-400 p-1.5 hover:text-[#6024a8] cursor-grab active:cursor-grabbing touch-none"
+                            >
+                              <GripVertical size={16} />
+                            </div>
+
+                            <div>
+                              <h4 className="font-medium text-slate-800 text-[13px]">{item.name}</h4>
+                              <span className="text-[10.5px] text-slate-400 font-mono">{item.key}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAttributeToEdit(item);
+                                setIsModalOpen(true);
+                              }}
+                              className="text-slate-400 hover:text-[#6024a8] p-1"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setAttributeToDelete(item)}
+                              className="text-slate-400 hover:text-rose-600 p-1"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                          {renderDataTypeBadge(item.dataType)}
+                          {item.mandatory ? (
+                            <span className="px-2 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-100 text-[10.5px] font-medium">
+                              Mandatory
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600 text-[10.5px]">
+                              Optional
+                            </span>
+                          )}
+                        </div>
+
+                        {item.dataType === "List" && item.options && item.options.length > 0 && (
+                          <div className="text-[11px] text-slate-600 space-y-1">
+                            <span className="text-slate-400 text-[10.5px]">Options:</span>
+                            <div className="flex flex-wrap gap-1">
+                              {item.options.map((opt, i) => (
+                                <span key={i} className="px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[10px]">
+                                  {opt}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {item.defaultValue !== undefined && item.defaultValue !== "" && (
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                            <span className="text-slate-400">Default: </span>
                             {item.dataType === "Boolean" ? (
                               <div className="flex items-center gap-1.5">
                                 <span
-                                  className={`relative inline-flex h-4 w-7 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
+                                  className={`relative inline-flex h-3.5 w-6 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
                                     item.defaultValue === true || item.defaultValue === "true"
                                       ? "bg-[#6024a8]"
                                       : "bg-slate-300"
                                   }`}
                                 >
                                   <span
-                                    className={`inline-block h-3 w-3 transform rounded-[2px] bg-white shadow transition duration-200 ${
+                                    className={`inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow transition duration-200 ${
                                       item.defaultValue === true || item.defaultValue === "true"
-                                        ? "translate-x-3"
+                                        ? "translate-x-2.5"
                                         : "translate-x-0"
                                     }`}
                                   />
                                 </span>
-                                <span
-                                  className={`text-[11px] font-medium ${
-                                    item.defaultValue === true || item.defaultValue === "true"
-                                      ? "text-[#6024a8]"
-                                      : "text-slate-500"
-                                  }`}
-                                >
+                                <span className="font-medium text-[10px] text-slate-700">
                                   {item.defaultValue === true || item.defaultValue === "true" ? "True (ON)" : "False (OFF)"}
                                 </span>
                               </div>
-                            ) : item.defaultValue !== undefined && item.defaultValue !== "" && item.defaultValue !== null ? (
-                              <span className="text-slate-700 text-[12px] font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
-                                {String(item.defaultValue)}
-                              </span>
                             ) : (
-                              <span className="text-slate-300 text-[12px]">None</span>
+                              <span className="font-mono text-slate-700">{String(item.defaultValue)}</span>
                             )}
-                          </td>
-
-                          {/* Actions: Edit & Delete */}
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              {/* Edit Button */}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAttributeToEdit(item);
-                                  setIsModalOpen(true);
-                                }}
-                                title="Edit Attribute"
-                                className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <Edit3 size={13} />
-                              </button>
-
-                              {/* Delete Button */}
-                              <button
-                                type="button"
-                                onClick={() => setAttributeToDelete(item)}
-                                title="Delete Attribute"
-                                className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card UI */}
-              <div className="md:hidden space-y-2.5">
-                {filteredAttributes.map((item, index) => (
-                  <div
-                    key={item.id}
-                    draggable={!searchQuery}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData("text/plain", String(index));
-                      setDraggedIndex(index);
-                    }}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const fromIdx = parseInt(e.dataTransfer.getData("text/plain"), 10);
-                      handleReorder(fromIdx, index);
-                    }}
-                    className="p-3.5 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-2.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="text-slate-400 cursor-grab active:cursor-grabbing p-1">
-                          <GripVertical size={15} />
-                        </div>
-                        <div>
-                          <h4 className="font-medium text-slate-800 text-[13px]">{item.name}</h4>
-                          <span className="text-[10.5px] text-slate-400 font-mono">{item.key}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAttributeToEdit(item);
-                            setIsModalOpen(true);
-                          }}
-                          className="text-slate-400 hover:text-[#6024a8] p-1"
-                        >
-                          <Edit3 size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAttributeToDelete(item)}
-                          className="text-slate-400 hover:text-rose-600 p-1"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                      {renderDataTypeBadge(item.dataType)}
-                      {item.mandatory ? (
-                        <span className="px-2 py-0.5 rounded-[4px] bg-rose-50 text-rose-700 border border-rose-100 text-[10.5px] font-medium">
-                          Mandatory
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-[4px] bg-slate-100 text-slate-600 text-[10.5px]">
-                          Optional
-                        </span>
-                      )}
-                    </div>
-
-                    {item.dataType === "List" && item.options && item.options.length > 0 && (
-                      <div className="text-[11px] text-slate-600 space-y-1">
-                        <span className="text-slate-400 text-[10.5px]">Options:</span>
-                        <div className="flex flex-wrap gap-1">
-                          {item.options.map((opt, i) => (
-                            <span key={i} className="px-1.5 py-0.2 bg-slate-100 text-slate-700 rounded text-[10px]">
-                              {opt}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {item.defaultValue !== undefined && item.defaultValue !== "" && (
-                      <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                        <span className="text-slate-400">Default: </span>
-                        {item.dataType === "Boolean" ? (
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`relative inline-flex h-3.5 w-6 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
-                                item.defaultValue === true || item.defaultValue === "true"
-                                  ? "bg-[#6024a8]"
-                                  : "bg-slate-300"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow transition duration-200 ${
-                                  item.defaultValue === true || item.defaultValue === "true"
-                                    ? "translate-x-2.5"
-                                    : "translate-x-0"
-                                }`}
-                              />
-                            </span>
-                            <span className="font-medium text-[10px] text-slate-700">
-                              {item.defaultValue === true || item.defaultValue === "true" ? "True (ON)" : "False (OFF)"}
-                            </span>
                           </div>
-                        ) : (
-                          <span className="font-mono text-slate-700">{String(item.defaultValue)}</span>
                         )}
                       </div>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
