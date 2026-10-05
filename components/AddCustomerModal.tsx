@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check, Sparkles } from "lucide-react";
+import { CustomAttribute } from "./AddCustomAttributeModal";
 
 interface AddCustomerModalProps {
   isOpen: boolean;
@@ -14,20 +15,78 @@ export default function AddCustomerModal({
   onClose,
   onSuccess,
 }: AddCustomerModalProps) {
+  // Core Customer Fields
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [city, setCity] = useState("");
 
+  // Dynamic Custom Attributes
+  const [customAttributes, setCustomAttributes] = useState<CustomAttribute[]>([]);
+  const [customValues, setCustomValues] = useState<Record<string, any>>({});
+  const [loadingAttributes, setLoadingAttributes] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch customer custom attributes when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    async function fetchCustomerAttributes() {
+      setLoadingAttributes(true);
+      try {
+        const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
+        const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}&entity=customers` : "?entity=customers";
+
+        const res = await fetch(`/api/custom-attributes${query}`);
+        const data = await res.json();
+
+        if (isMounted && data.success && Array.isArray(data.attributes)) {
+          setCustomAttributes(data.attributes);
+
+          // Initialize custom values with default values from attributes schema
+          const initialVals: Record<string, any> = {};
+          data.attributes.forEach((attr: CustomAttribute) => {
+            if (attr.defaultValue !== undefined && attr.defaultValue !== null && attr.defaultValue !== "") {
+              initialVals[attr.key] = attr.defaultValue;
+            } else if (attr.dataType === "Boolean") {
+              initialVals[attr.key] = false;
+            } else {
+              initialVals[attr.key] = "";
+            }
+          });
+          setCustomValues(initialVals);
+        }
+      } catch (err) {
+        console.warn("[Error fetching customer custom attributes]", err);
+      } finally {
+        if (isMounted) setLoadingAttributes(false);
+      }
+    }
+
+    fetchCustomerAttributes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const handleCustomFieldChange = (key: string, value: any) => {
+    setCustomValues((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    // Validate Core Fields
     if (!name.trim()) {
       setError("Please enter the customer name.");
       return;
@@ -39,6 +98,17 @@ export default function AddCustomerModal({
     if (!city.trim()) {
       setError("Please enter the city.");
       return;
+    }
+
+    // Validate Mandatory Custom Attributes
+    for (const attr of customAttributes) {
+      if (attr.mandatory) {
+        const val = customValues[attr.key];
+        if (val === undefined || val === null || String(val).trim() === "") {
+          setError(`"${attr.name}" is mandatory. Please provide a value.`);
+          return;
+        }
+      }
     }
 
     setLoading(true);
@@ -55,6 +125,7 @@ export default function AddCustomerModal({
           mobile: mobile.trim(),
           email: email.trim(),
           city: city.trim(),
+          customAttributes: customValues,
         }),
       });
 
@@ -69,6 +140,7 @@ export default function AddCustomerModal({
       setMobile("");
       setEmail("");
       setCity("");
+      setCustomValues({});
 
       onSuccess(data.customer);
       onClose();
@@ -79,17 +151,36 @@ export default function AddCustomerModal({
     }
   };
 
+  // Dynamic modal sizing based on number of custom attributes:
+  // 0 attributes: max-w-[420px]
+  // 1-2 attributes: max-w-[520px]
+  // 3+ attributes: max-w-[680px]
+  const hasCustomAttributes = customAttributes.length > 0;
+  const isLargeModal = customAttributes.length >= 3;
+  const modalWidthClass = isLargeModal
+    ? "max-w-[680px]"
+    : hasCustomAttributes
+    ? "max-w-[520px]"
+    : "max-w-[420px]";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="relative w-full max-w-[420px] bg-white rounded-[6px] border border-slate-200 shadow-2xl p-6 animate-in zoom-in-95 duration-150">
+      <div
+        className={`relative w-full ${modalWidthClass} max-h-[90vh] overflow-y-auto bg-white rounded-[6px] border border-slate-200 shadow-2xl p-6 animate-in zoom-in-95 duration-150`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>
-            <h3 className="text-[14.5px] font-medium text-slate-900">
-              Add New Customer
+            <h3 className="text-[14.5px] font-medium text-slate-900 flex items-center gap-1.5">
+              <span>Add New Customer</span>
+              {hasCustomAttributes && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-100">
+                  +{customAttributes.length} Custom {customAttributes.length === 1 ? "Field" : "Fields"}
+                </span>
+              )}
             </h3>
             <p className="text-[11px] text-slate-400">
-              Enter customer contact information
+              Enter customer contact information and configured business attributes
             </p>
           </div>
           <button
@@ -108,83 +199,187 @@ export default function AddCustomerModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
-          {/* 1. Customer Name (Required) */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* SECTION 1: Standard Customer Details */}
           <div>
-            <label className="block text-[12px] font-medium text-slate-700 mb-1">
-              Customer Name <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative flex items-center">
-              <User size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Ramesh Kumar"
-                className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-              />
+            {hasCustomAttributes && (
+              <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5">
+                Standard Information
+              </div>
+            )}
+
+            <div
+              className={`grid gap-3.5 ${
+                isLargeModal ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+              }`}
+            >
+              {/* 1. Customer Name (Required) */}
+              <div>
+                <label className="block text-[12px] font-medium text-slate-700 mb-1">
+                  Customer Name <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <User size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Ramesh Kumar"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  />
+                </div>
+              </div>
+
+              {/* 2. Mobile Number (Required) */}
+              <div>
+                <label className="block text-[12px] font-medium text-slate-700 mb-1">
+                  Mobile Number <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Phone size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="tel"
+                    required
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Email (Optional) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[12px] font-medium text-slate-700">
+                    Email Address
+                  </label>
+                  <span className="text-[10.5px] text-slate-400">Optional</span>
+                </div>
+                <div className="relative flex items-center">
+                  <Mail size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="customer@domain.com (optional)"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  />
+                </div>
+              </div>
+
+              {/* 4. City (Required) */}
+              <div>
+                <label className="block text-[12px] font-medium text-slate-700 mb-1">
+                  City <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Building size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Hyderabad, Nellore, Bangalore"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 2. Mobile Number (Required) */}
-          <div>
-            <label className="block text-[12px] font-medium text-slate-700 mb-1">
-              Mobile Number <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative flex items-center">
-              <Phone size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
-              <input
-                type="tel"
-                required
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-                placeholder="+91 98765 43210"
-                className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-              />
-            </div>
-          </div>
+          {/* SECTION 2: Dynamic Custom Attributes */}
+          {hasCustomAttributes && (
+            <div className="pt-3 border-t border-slate-100">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5">
+                <Sparkles size={12} className="text-[#6024a8]" />
+                <span>Custom Attributes</span>
+              </div>
 
-          {/* 3. Email (Optional) */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[12px] font-medium text-slate-700">
-                Email Address
-              </label>
-              <span className="text-[10.5px] text-slate-400">Optional</span>
-            </div>
-            <div className="relative flex items-center">
-              <Mail size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="customer@domain.com (optional)"
-                className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-              />
-            </div>
-          </div>
+              <div
+                className={`grid gap-3.5 ${
+                  isLargeModal ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+                }`}
+              >
+                {customAttributes.map((attr) => {
+                  const currentValue = customValues[attr.key] ?? "";
 
-          {/* 4. City (Required) */}
-          <div>
-            <label className="block text-[12px] font-medium text-slate-700 mb-1">
-              City <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative flex items-center">
-              <Building size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                required
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g. Hyderabad, Nellore, Bangalore"
-                className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-              />
+                  return (
+                    <div key={attr.key}>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[12px] font-medium text-slate-700">
+                          {attr.name} {attr.mandatory && <span className="text-rose-500">*</span>}
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          {attr.dataType}
+                        </span>
+                      </div>
+
+                      {/* 1. String */}
+                      {attr.dataType === "String" && (
+                        <input
+                          type="text"
+                          required={attr.mandatory}
+                          value={currentValue}
+                          onChange={(e) => handleCustomFieldChange(attr.key, e.target.value)}
+                          placeholder={`Enter ${attr.name}...`}
+                          className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                        />
+                      )}
+
+                      {/* 2. Integer */}
+                      {attr.dataType === "Integer" && (
+                        <input
+                          type="number"
+                          step="1"
+                          required={attr.mandatory}
+                          value={currentValue}
+                          onChange={(e) => handleCustomFieldChange(attr.key, e.target.value)}
+                          placeholder="e.g. 0, 10, 50..."
+                          className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                        />
+                      )}
+
+                      {/* 3. Boolean */}
+                      {attr.dataType === "Boolean" && (
+                        <select
+                          value={String(currentValue)}
+                          onChange={(e) =>
+                            handleCustomFieldChange(attr.key, e.target.value === "true")
+                          }
+                          className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal cursor-pointer"
+                        >
+                          <option value="false">No (False)</option>
+                          <option value="true">Yes (True)</option>
+                        </select>
+                      )}
+
+                      {/* 4. List */}
+                      {attr.dataType === "List" && (
+                        <select
+                          required={attr.mandatory}
+                          value={currentValue}
+                          onChange={(e) => handleCustomFieldChange(attr.key, e.target.value)}
+                          className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal cursor-pointer"
+                        >
+                          <option value="">Select {attr.name}...</option>
+                          {attr.options?.map((opt, idx) => (
+                            <option key={idx} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons - strictly max-h-[34px], rounded-[6px], font-weight 500 */}
-          <div className="pt-2 flex items-center justify-end gap-2">
+          <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}

@@ -22,6 +22,7 @@ export interface Customer {
   mobile: string;
   email?: string;
   city: string;
+  customAttributes?: Record<string, any>;
   userId: string;
   createdAt: string;
   updatedAt: string;
@@ -84,11 +85,15 @@ export default function CustomersPage() {
   const filteredCustomers = customers.filter((c) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
+    const hasMatchingAttr = c.customAttributes && Object.values(c.customAttributes).some(
+      (val) => String(val).toLowerCase().includes(query)
+    );
     return (
       c.name.toLowerCase().includes(query) ||
       c.mobile.includes(query) ||
       (c.email && c.email.toLowerCase().includes(query)) ||
-      c.city.toLowerCase().includes(query)
+      c.city.toLowerCase().includes(query) ||
+      hasMatchingAttr
     );
   });
 
@@ -102,7 +107,26 @@ export default function CustomersPage() {
           <div className="w-7 h-7 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center text-[12px] font-medium shrink-0">
             {item.name.charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-slate-800 truncate">{item.name}</span>
+          <div>
+            <span className="font-medium text-slate-800 truncate block">{item.name}</span>
+            {item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-0.5">
+                {Object.entries(item.customAttributes).map(([k, v]) => {
+                  if (v === undefined || v === null || v === "") return null;
+                  const displayKey = k.replace(/_/g, " ");
+                  return (
+                    <span
+                      key={k}
+                      className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8]"
+                    >
+                      <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
+                      <span className="font-medium">{String(v)}</span>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       ),
     },
@@ -205,6 +229,24 @@ export default function CustomersPage() {
         <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-0.5 truncate">
           <Mail size={11} className="text-slate-400 shrink-0" />
           <span className="truncate">{item.email}</span>
+        </div>
+      )}
+
+      {item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
+        <div className="flex flex-wrap gap-1 pt-1.5 border-t border-slate-50">
+          {Object.entries(item.customAttributes).map(([k, v]) => {
+            if (v === undefined || v === null || v === "") return null;
+            const displayKey = k.replace(/_/g, " ");
+            return (
+              <span
+                key={k}
+                className="inline-flex items-center text-[10.5px] px-2 py-0.5 rounded-[4px] bg-purple-50 border border-purple-100 text-[#6024a8]"
+              >
+                <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
+                <span className="font-medium">{String(v)}</span>
+              </span>
+            );
+          })}
         </div>
       )}
     </div>

@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, mobile, email, city } = body;
+    const { name, mobile, email, city, customAttributes } = body;
 
     if (!name?.trim() || !mobile?.trim() || !city?.trim()) {
       return NextResponse.json(
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       mobile: mobile.trim(),
       email: email?.trim() ? email.trim().toLowerCase() : "",
       city: city.trim(),
+      customAttributes: customAttributes && typeof customAttributes === "object" ? customAttributes : {},
       userId: userEmail, // Strict multi-tenant isolation
       createdAt: now,
       updatedAt: now,
