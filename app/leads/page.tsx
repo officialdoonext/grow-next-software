@@ -16,7 +16,6 @@ import {
   Building2,
   Trash2,
   Calendar,
-  Users2,
   SlidersHorizontal,
   Edit2,
   Eye,
@@ -189,24 +188,32 @@ export default function LeadsPage() {
     );
   });
 
-  // Base Column Definitions
+  // Base Column Definitions with fixed widths and text-ellipsis
   const allColumns: ColumnDef<Lead>[] = [
     {
       key: "customerName",
-      header: "LEAD & BUSINESS NAME",
+      header: "LEAD NAME",
+      width: "210px",
       render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12.5px] font-medium shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2.5 min-w-0 max-w-full overflow-hidden" title={item.customerName}>
+          <div className="w-7 h-7 rounded-full bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12px] font-medium shrink-0 shadow-2xs">
             {item.customerName.charAt(0).toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <span className="font-medium text-slate-800 truncate block text-[13px] leading-tight">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <span
+              className="font-medium text-slate-800 truncate block text-[12.5px] leading-tight"
+              title={item.customerName}
+            >
               {item.customerName}
             </span>
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
-              <Building2 size={11} className="shrink-0 text-slate-400" />
-              <span className="truncate">{item.businessName}</span>
-            </div>
+            {item.businessName && (
+              <span
+                className="text-[11px] text-slate-400 truncate block mt-0.5"
+                title={item.businessName}
+              >
+                {item.businessName}
+              </span>
+            )}
           </div>
         </div>
       ),
@@ -214,31 +221,34 @@ export default function LeadsPage() {
     {
       key: "businessName",
       header: "BUSINESS NAME",
+      width: "170px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-700 text-[12.5px]">
+        <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.businessName}>
           <Building2 size={13} className="text-slate-400 shrink-0" />
-          <span className="font-normal truncate">{item.businessName}</span>
+          <span className="font-normal truncate block min-w-0 flex-1">{item.businessName}</span>
         </div>
       ),
     },
     {
       key: "mobile",
       header: "MOBILE NUMBER",
+      width: "140px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-700 text-[12.5px]">
+        <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.mobile}>
           <Phone size={13} className="text-slate-400 shrink-0" />
-          <span className="font-normal">{item.mobile}</span>
+          <span className="font-normal truncate block min-w-0 flex-1">{item.mobile}</span>
         </div>
       ),
     },
     {
       key: "email",
       header: "EMAIL ADDRESS",
+      width: "190px",
       render: (item) =>
         item.email ? (
-          <div className="flex items-center gap-2 text-slate-600 truncate max-w-[210px] text-[12px]">
+          <div className="flex items-center gap-2 text-slate-600 min-w-0 max-w-full overflow-hidden text-[12px]" title={item.email}>
             <Mail size={13} className="text-slate-400 shrink-0" />
-            <span className="truncate">{item.email}</span>
+            <span className="truncate block min-w-0 flex-1">{item.email}</span>
           </div>
         ) : (
           <span className="text-slate-300 text-[12px]">—</span>
@@ -247,15 +257,23 @@ export default function LeadsPage() {
     {
       key: "customAttributes",
       header: "CUSTOM ATTRIBUTES",
+      width: "210px",
       render: (item) => {
         if (!item.customAttributes || Object.keys(item.customAttributes).length === 0) {
           return <span className="text-slate-300 text-[12px]">—</span>;
         }
 
+        const entries = Object.entries(item.customAttributes).filter(
+          ([_, v]) => v !== undefined && v !== null && v !== ""
+        );
+        if (entries.length === 0) return <span className="text-slate-300 text-[12px]">—</span>;
+
         return (
-          <div className="flex flex-wrap gap-1 max-w-[280px]">
-            {Object.entries(item.customAttributes).map(([k, v]) => {
-              if (v === undefined || v === null || v === "") return null;
+          <div
+            className="flex items-center gap-1.5 max-w-full overflow-hidden"
+            title={entries.map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join(", ")}
+          >
+            {entries.slice(0, 2).map(([k, v]) => {
               const displayKey = k.replace(/_/g, " ");
               const isBool = typeof v === "boolean" || v === "true" || v === "false";
               const boolVal = v === true || v === "true";
@@ -264,7 +282,7 @@ export default function LeadsPage() {
                 return (
                   <div
                     key={k}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px]"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px] shrink-0"
                   >
                     <span className="capitalize text-slate-500">{displayKey}:</span>
                     <button
@@ -294,13 +312,18 @@ export default function LeadsPage() {
               return (
                 <span
                   key={k}
-                  className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8]"
+                  className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8] min-w-0 max-w-[95px] overflow-hidden truncate"
                 >
-                  <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
-                  <span className="font-medium">{String(v)}</span>
+                  <span className="capitalize text-slate-400 mr-1 shrink-0">{displayKey}:</span>
+                  <span className="font-medium truncate block">{String(v)}</span>
                 </span>
               );
             })}
+            {entries.length > 2 && (
+              <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                +{entries.length - 2}...
+              </span>
+            )}
           </div>
         );
       },
@@ -308,10 +331,11 @@ export default function LeadsPage() {
     {
       key: "createdAt",
       header: "REGISTERED DATE",
+      width: "140px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-500 text-[12px]">
+        <div className="flex items-center gap-2 text-slate-500 text-[12px] min-w-0 max-w-full overflow-hidden" title={item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}>
           <Calendar size={13} className="text-slate-400 shrink-0" />
-          <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</span>
+          <span className="truncate block min-w-0 flex-1">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</span>
         </div>
       ),
     },
@@ -320,18 +344,19 @@ export default function LeadsPage() {
   // Filter based on user column selection
   const visibleTableColumns = allColumns.filter((col) => visibleColumns[col.key] !== false);
 
-  // Append Actions Column
+  // Append Actions Column with fixed width
   const tableColumns: ColumnDef<Lead>[] = [
     ...visibleTableColumns,
     {
       key: "actions",
       header: "ACTIONS",
+      width: "116px",
       className: "text-right",
       render: (item) => {
         const isExpanded = expandedRowId === item.id;
 
         return (
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             {/* View All Details Toggle */}
             <button
               type="button"
@@ -475,24 +500,26 @@ export default function LeadsPage() {
     return (
       <div className="p-3.5 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
             <div className="w-7 h-7 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center text-[12px] font-medium shrink-0">
               {item.customerName.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <span className="font-medium text-slate-800 text-[13px]">{item.customerName}</span>
-              <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                <Briefcase size={11} className="shrink-0" />
-                <span>{item.businessName}</span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <span className="font-medium text-slate-800 text-[13px] block truncate">{item.customerName}</span>
+              {visibleColumns.businessName !== false && item.businessName && (
+                <div className="flex items-center gap-1 text-[11px] text-slate-400 truncate">
+                  <Briefcase size={11} className="shrink-0" />
+                  <span className="truncate">{item.businessName}</span>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
-              className="text-slate-400 hover:text-slate-700 p-1"
+              className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               title="Toggle all details"
             >
               <Eye size={14} />
@@ -503,37 +530,52 @@ export default function LeadsPage() {
                 setLeadToEdit(item);
                 setIsModalOpen(true);
               }}
-              className="text-slate-400 hover:text-[#6024a8] p-1"
+              className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
+              title="Edit lead"
             >
               <Edit2 size={14} />
             </button>
             <button
               type="button"
               onClick={() => setLeadToDelete(item)}
-              className="text-slate-400 hover:text-rose-600 p-1"
+              className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+              title="Delete lead"
             >
               <Trash2 size={14} />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[11.5px] text-slate-600 pt-1 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 truncate">
-            <Phone size={12} className="text-slate-400 shrink-0" />
-            <span className="truncate">{item.mobile}</span>
+        {/* Contact details row - only display if visible */}
+        {(visibleColumns.mobile !== false || (visibleColumns.email !== false && item.email)) && (
+          <div className="grid grid-cols-2 gap-1.5 text-[11.5px] text-slate-600 pt-1 border-t border-slate-100">
+            {visibleColumns.mobile !== false && (
+              <div className="flex items-center gap-1.5 truncate">
+                <Phone size={12} className="text-slate-400 shrink-0" />
+                <span className="truncate">{item.mobile}</span>
+              </div>
+            )}
+            {visibleColumns.email !== false && item.email ? (
+              <div className="flex items-center gap-1.5 truncate">
+                <Mail size={12} className="text-slate-400 shrink-0" />
+                <span className="truncate">{item.email}</span>
+              </div>
+            ) : visibleColumns.mobile !== false && visibleColumns.email !== false ? (
+              <span className="text-slate-300">—</span>
+            ) : null}
           </div>
-          {item.email ? (
-            <div className="flex items-center gap-1.5 truncate">
-              <Mail size={12} className="text-slate-400 shrink-0" />
-              <span className="truncate">{item.email}</span>
-            </div>
-          ) : (
-            <span className="text-slate-300">—</span>
-          )}
-        </div>
+        )}
 
-        {/* Custom Attributes summary */}
-        {item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
+        {/* Registered Date if visible */}
+        {visibleColumns.createdAt !== false && item.createdAt && (
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+            <Calendar size={11} className="shrink-0" />
+            <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+          </div>
+        )}
+
+        {/* Custom Attributes summary - ONLY render if customAttributes is visible */}
+        {visibleColumns.customAttributes !== false && item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1.5 border-t border-slate-50">
             {Object.entries(item.customAttributes).map(([k, v]) => {
               if (v === undefined || v === null || v === "") return null;
@@ -570,7 +612,7 @@ export default function LeadsPage() {
               return (
                 <span
                   key={k}
-                  className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded-[3px] bg-purple-50 border border-purple-100 text-[#6024a8]"
+                  className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-[3px] bg-purple-50 border border-purple-100 text-[#6024a8]"
                 >
                   <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
                   <span className="font-medium">{String(v)}</span>
@@ -723,54 +765,7 @@ export default function LeadsPage() {
           </div>
         </div>
 
-        {/* 2. Pipeline / Status KPI Bar matching design mockup */}
-        <div className="bg-white rounded-[8px] border border-slate-200/80 p-3 shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Left: Leads Pipeline Title & Count */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center shrink-0">
-              <Users2 size={18} />
-            </div>
-            <div>
-              <h2 className="text-[13.5px] font-medium text-slate-800 leading-tight">
-                Leads Pipeline
-              </h2>
-              <span className="text-[11px] text-slate-400">
-                {leads.length} {leads.length === 1 ? "lead" : "leads"} registered
-              </span>
-            </div>
-          </div>
-
-          {/* Right: Pipeline Stat Pills */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] bg-[#f8f0ff] border border-purple-100 text-[12px]">
-              <span className="w-2 h-2 rounded-full bg-[#6024a8]" />
-              <span className="font-medium text-slate-800">{leads.length}</span>
-              <span className="text-slate-500 text-[11px]">Total Leads</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] text-slate-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span className="font-medium text-slate-800">0</span>
-              <span className="text-slate-400">New</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] text-slate-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              <span className="font-medium text-slate-800">0</span>
-              <span className="text-slate-400">In Progress</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] text-slate-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="font-medium text-slate-800">0</span>
-              <span className="text-slate-400">Converted</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11.5px] text-slate-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-              <span className="font-medium text-slate-800">0</span>
-              <span className="text-slate-400">Lost</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Integrated Table Workspace Card */}
+        {/* 2. Integrated Table Workspace Card */}
         <ResponsiveDataList<Lead>
           items={filteredLeads}
           columns={tableColumns}

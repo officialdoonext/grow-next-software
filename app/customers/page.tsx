@@ -192,17 +192,21 @@ export default function CustomersPage() {
     );
   });
 
-  // Dynamic Table Columns according to visibleColumns selection
+  // Dynamic Table Columns according to visibleColumns selection with fixed widths and text-ellipsis
   const allColumns: ColumnDef<Customer>[] = [
     {
       key: "name",
       header: "CUSTOMER NAME",
+      width: "210px",
       render: (item) => (
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12.5px] font-medium shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2.5 min-w-0 max-w-full overflow-hidden" title={item.name}>
+          <div className="w-7 h-7 rounded-full bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12px] font-medium shrink-0 shadow-2xs">
             {item.name.charAt(0).toUpperCase()}
           </div>
-          <span className="font-medium text-slate-800 truncate block text-[13px] leading-tight">
+          <span
+            className="font-medium text-slate-800 truncate block text-[12.5px] leading-tight min-w-0 flex-1"
+            title={item.name}
+          >
             {item.name}
           </span>
         </div>
@@ -211,21 +215,23 @@ export default function CustomersPage() {
     {
       key: "mobile",
       header: "MOBILE NUMBER",
+      width: "140px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-700 text-[12.5px]">
+        <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.mobile}>
           <Phone size={13} className="text-slate-400 shrink-0" />
-          <span className="font-normal">{item.mobile}</span>
+          <span className="font-normal truncate block min-w-0 flex-1">{item.mobile}</span>
         </div>
       ),
     },
     {
       key: "email",
       header: "EMAIL ADDRESS",
+      width: "190px",
       render: (item) =>
         item.email ? (
-          <div className="flex items-center gap-2 text-slate-600 truncate max-w-[210px] text-[12px]">
+          <div className="flex items-center gap-2 text-slate-600 min-w-0 max-w-full overflow-hidden text-[12px]" title={item.email}>
             <Mail size={13} className="text-slate-400 shrink-0" />
-            <span className="truncate">{item.email}</span>
+            <span className="truncate block min-w-0 flex-1">{item.email}</span>
           </div>
         ) : (
           <span className="text-slate-300 text-[12px]">—</span>
@@ -234,25 +240,34 @@ export default function CustomersPage() {
     {
       key: "city",
       header: "CITY",
+      width: "140px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-700 text-[12.5px]">
+        <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.city}>
           <MapPin size={13} className="text-slate-400 shrink-0" />
-          <span className="font-normal">{item.city}</span>
+          <span className="font-normal truncate block min-w-0 flex-1">{item.city || "—"}</span>
         </div>
       ),
     },
     {
       key: "customAttributes",
       header: "CUSTOM ATTRIBUTES",
+      width: "210px",
       render: (item) => {
         if (!item.customAttributes || Object.keys(item.customAttributes).length === 0) {
           return <span className="text-slate-300 text-[12px]">—</span>;
         }
 
+        const entries = Object.entries(item.customAttributes).filter(
+          ([_, v]) => v !== undefined && v !== null && v !== ""
+        );
+        if (entries.length === 0) return <span className="text-slate-300 text-[12px]">—</span>;
+
         return (
-          <div className="flex flex-wrap gap-1 max-w-[280px]">
-            {Object.entries(item.customAttributes).map(([k, v]) => {
-              if (v === undefined || v === null || v === "") return null;
+          <div
+            className="flex items-center gap-1.5 max-w-full overflow-hidden"
+            title={entries.map(([k, v]) => `${k.replace(/_/g, " ")}: ${v}`).join(", ")}
+          >
+            {entries.slice(0, 2).map(([k, v]) => {
               const displayKey = k.replace(/_/g, " ");
               const isBool = typeof v === "boolean" || v === "true" || v === "false";
               const boolVal = v === true || v === "true";
@@ -261,7 +276,7 @@ export default function CustomersPage() {
                 return (
                   <div
                     key={k}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px]"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px] shrink-0"
                   >
                     <span className="capitalize text-slate-500">{displayKey}:</span>
                     <button
@@ -291,13 +306,18 @@ export default function CustomersPage() {
               return (
                 <span
                   key={k}
-                  className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8]"
+                  className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-[3px] bg-purple-50/70 border border-purple-100 text-[#6024a8] min-w-0 max-w-[95px] overflow-hidden truncate"
                 >
-                  <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
-                  <span className="font-medium">{String(v)}</span>
+                  <span className="capitalize text-slate-400 mr-1 shrink-0">{displayKey}:</span>
+                  <span className="font-medium truncate block">{String(v)}</span>
                 </span>
               );
             })}
+            {entries.length > 2 && (
+              <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                +{entries.length - 2}...
+              </span>
+            )}
           </div>
         );
       },
@@ -305,10 +325,11 @@ export default function CustomersPage() {
     {
       key: "createdAt",
       header: "REGISTERED DATE",
+      width: "140px",
       render: (item) => (
-        <div className="flex items-center gap-2 text-slate-500 text-[12px]">
+        <div className="flex items-center gap-2 text-slate-500 text-[12px] min-w-0 max-w-full overflow-hidden" title={item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}>
           <Calendar size={13} className="text-slate-400 shrink-0" />
-          <span>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</span>
+          <span className="truncate block min-w-0 flex-1">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "—"}</span>
         </div>
       ),
     },
@@ -317,18 +338,19 @@ export default function CustomersPage() {
   // Filter columns based on user column selection
   const visibleTableColumns = allColumns.filter((col) => visibleColumns[col.key] !== false);
 
-  // Always append Actions Column
+  // Always append Actions Column with fixed width
   const tableColumns: ColumnDef<Customer>[] = [
     ...visibleTableColumns,
     {
       key: "actions",
       header: "ACTIONS",
+      width: "116px",
       className: "text-right",
       render: (item) => {
         const isExpanded = expandedRowId === item.id;
 
         return (
-          <div className="flex items-center justify-end gap-1.5">
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
             {/* View All Details Toggle */}
             <button
               type="button"
@@ -472,18 +494,18 @@ export default function CustomersPage() {
     return (
       <div className="p-3.5 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1 pr-2">
             <div className="w-7 h-7 rounded-[6px] bg-purple-50 text-[#6024a8] flex items-center justify-center text-[12px] font-medium shrink-0">
               {item.name.charAt(0).toUpperCase()}
             </div>
-            <span className="font-medium text-slate-800 text-[13px]">{item.name}</span>
+            <span className="font-medium text-slate-800 text-[13px] truncate block">{item.name}</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               type="button"
               onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
-              className="text-slate-400 hover:text-slate-700 p-1"
+              className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               title="Toggle all details"
             >
               <Eye size={14} />
@@ -494,40 +516,58 @@ export default function CustomersPage() {
                 setCustomerToEdit(item);
                 setIsModalOpen(true);
               }}
-              className="text-slate-400 hover:text-[#6024a8] p-1"
+              className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
+              title="Edit customer"
             >
               <Edit2 size={14} />
             </button>
             <button
               type="button"
               onClick={() => setCustomerToDelete(item)}
-              className="text-slate-400 hover:text-rose-600 p-1"
+              className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+              title="Delete customer"
             >
               <Trash2 size={14} />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-1.5 text-[11.5px] text-slate-600 pt-1 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 truncate">
-            <Phone size={12} className="text-slate-400 shrink-0" />
-            <span className="truncate">{item.mobile}</span>
+        {/* Details row: Mobile & City - only display if visible */}
+        {(visibleColumns.mobile !== false || (visibleColumns.city !== false && item.city)) && (
+          <div className="grid grid-cols-2 gap-1.5 text-[11.5px] text-slate-600 pt-1 border-t border-slate-100">
+            {visibleColumns.mobile !== false && (
+              <div className="flex items-center gap-1.5 truncate">
+                <Phone size={12} className="text-slate-400 shrink-0" />
+                <span className="truncate">{item.mobile}</span>
+              </div>
+            )}
+            {visibleColumns.city !== false && item.city && (
+              <div className="flex items-center gap-1.5 truncate">
+                <MapPin size={12} className="text-slate-400 shrink-0" />
+                <span className="truncate">{item.city}</span>
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-1.5 truncate">
-            <MapPin size={12} className="text-slate-400 shrink-0" />
-            <span className="truncate">{item.city}</span>
-          </div>
-        </div>
+        )}
 
-        {item.email && (
+        {/* Email if visible */}
+        {visibleColumns.email !== false && item.email && (
           <div className="flex items-center gap-1.5 text-[11px] text-slate-500 pt-0.5 truncate">
             <Mail size={11} className="text-slate-400 shrink-0" />
             <span className="truncate">{item.email}</span>
           </div>
         )}
 
-        {/* Custom Attributes summary */}
-        {item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
+        {/* Registered Date if visible */}
+        {visibleColumns.createdAt !== false && item.createdAt && (
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+            <Calendar size={11} className="shrink-0" />
+            <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+          </div>
+        )}
+
+        {/* Custom Attributes summary - ONLY render if customAttributes is visible */}
+        {visibleColumns.customAttributes !== false && item.customAttributes && Object.keys(item.customAttributes).length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1.5 border-t border-slate-50">
             {Object.entries(item.customAttributes).map(([k, v]) => {
               if (v === undefined || v === null || v === "") return null;
@@ -564,7 +604,7 @@ export default function CustomersPage() {
               return (
                 <span
                   key={k}
-                  className="inline-flex items-center text-[10px] px-1.5 py-0.2 rounded-[3px] bg-purple-50 border border-purple-100 text-[#6024a8]"
+                  className="inline-flex items-center text-[10px] px-1.5 py-0.5 rounded-[3px] bg-purple-50 border border-purple-100 text-[#6024a8]"
                 >
                   <span className="capitalize text-slate-400 mr-1">{displayKey}:</span>
                   <span className="font-medium">{String(v)}</span>

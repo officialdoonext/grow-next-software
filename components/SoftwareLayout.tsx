@@ -300,19 +300,36 @@ export default function SoftwareLayout({ children, pageTitle, hideDefaultHeader 
       {/* 3. Main Content Container (Pushed right by sidebar width on desktop) */}
       <div className="flex-1 flex flex-col md:pl-[240px] min-w-0">
         {/* Top Header Bar */}
-        <header className="h-[52px] bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-3">
+        <header className="h-[52px] bg-white border-b border-slate-200/80 px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Mobile Hamburger Toggle */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden w-8 h-8 max-h-[34px] rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center"
+              className="md:hidden w-8 h-8 max-h-[34px] rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center cursor-pointer shrink-0"
+              aria-label="Open navigation menu"
             >
-              <span className="text-[16px]">☰</span>
+              <span className="text-[16px] leading-none">☰</span>
             </button>
 
-            {/* Breadcrumbs with Home Icon matching attached design */}
-            <div className="flex items-center gap-2 text-[12px] text-slate-400">
+            {/* Mobile Logo beside Hamburger (Mobile only) */}
+            <div className="md:hidden flex items-center">
+              <Link href="/dashboard" className="flex items-center">
+                <div className="relative w-[115px] h-[32px] flex items-center">
+                  <Image
+                    src="/grownext-logo.jpeg"
+                    alt="GrowNext"
+                    width={115}
+                    height={32}
+                    priority
+                    className="object-contain mix-blend-multiply"
+                  />
+                </div>
+              </Link>
+            </div>
+
+            {/* Breadcrumbs with Home Icon (Desktop and Tablet only, hidden on Mobile) */}
+            <div className="hidden md:flex items-center gap-2 text-[12px] text-slate-400">
               <Link href="/dashboard" className="hover:text-slate-600 transition-colors flex items-center">
                 <Home size={14} className="text-slate-400" />
               </Link>

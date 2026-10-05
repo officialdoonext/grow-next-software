@@ -8,6 +8,7 @@ export interface ColumnDef<T> {
   header: string;
   render?: (item: T) => React.ReactNode;
   className?: string;
+  width?: string;
 }
 
 interface ResponsiveDataListProps<T extends { id: string }> {
@@ -81,59 +82,99 @@ export default function ResponsiveDataList<T extends { id: string }>({
         </div>
       ) : (
         <>
-          {/* 3. Desktop Table Layout (md and above) */}
-          <div className="hidden md:block w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-[#f8fafc]">
-                  {columns.map((col) => (
-                    <th
-                      key={col.key}
-                      className={`h-[38px] px-4 text-[10.5px] font-medium text-slate-400 uppercase tracking-wider select-none ${
-                        col.className || ""
-                      }`}
-                    >
-                      {col.header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {currentItems.map((item) => (
-                  <React.Fragment key={item.id}>
-                    <tr
-                      className={`hover:bg-[#fbfafd] transition-colors h-[50px] text-[12.5px] text-slate-700 ${
-                        expandedRowId === item.id ? "bg-purple-50/25 font-medium" : ""
-                      }`}
-                    >
+          {/* 3. Desktop & Tablet Table Layout (md and above) */}
+          {(() => {
+            const totalCalculatedWidth = columns.reduce((acc, col) => {
+              if (col.width && col.width.endsWith("px")) {
+                return acc + parseInt(col.width, 10);
+              }
+              return acc + 160;
+            }, 0);
+
+            return (
+              <div className="hidden md:block w-full overflow-x-auto">
+                <table
+                  style={{ minWidth: `${Math.max(totalCalculatedWidth, 800)}px` }}
+                  className="w-full text-left border-collapse table-fixed"
+                >
+                  <colgroup>
+                    {columns.map((col) => (
+                      <col
+                        key={col.key}
+                        style={col.width ? { width: col.width, minWidth: col.width } : undefined}
+                      />
+                    ))}
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-[#f8fafc]">
                       {columns.map((col) => (
-                        <td key={col.key} className={`px-4 py-2.5 ${col.className || ""}`}>
-                          {col.render ? col.render(item) : (item as any)[col.key] ?? "—"}
-                        </td>
+                        <th
+                          key={col.key}
+                          style={col.width ? { width: col.width, minWidth: col.width } : undefined}
+                          title={col.header}
+                          className={`h-[38px] px-3.5 sm:px-4 text-[10.5px] font-medium text-slate-400 uppercase tracking-wider select-none truncate ${
+                            col.className || ""
+                          }`}
+                        >
+                          {col.header}
+                        </th>
                       ))}
                     </tr>
-                    {expandedRowId === item.id && renderExpandedRow && (
-                      <tr className="bg-slate-50/70 border-b border-purple-100">
-                        <td colSpan={columns.length} className="px-5 py-4">
-                          {renderExpandedRow(item)}
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {currentItems.map((item) => (
+                      <React.Fragment key={item.id}>
+                        <tr
+                          className={`hover:bg-[#fbfafd] transition-colors h-[50px] text-[12.5px] text-slate-700 ${
+                            expandedRowId === item.id ? "bg-purple-50/25 font-medium" : ""
+                          }`}
+                        >
+                          {columns.map((col) => (
+                            <td
+                              key={col.key}
+                              style={col.width ? { width: col.width, minWidth: col.width } : undefined}
+                              className={`px-3.5 sm:px-4 py-2.5 truncate max-w-0 overflow-hidden ${col.className || ""}`}
+                            >
+                              {col.key === "actions" ? (
+                                col.render ? col.render(item) : null
+                              ) : (
+                                <div className="w-full max-w-full overflow-hidden truncate">
+                                  {col.render ? (
+                                    col.render(item)
+                                  ) : (
+                                    <span className="truncate block" title={String((item as any)[col.key] ?? "")}>
+                                      {(item as any)[col.key] ?? "—"}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                        {expandedRowId === item.id && renderExpandedRow && (
+                          <tr className="bg-slate-50/70 border-b border-purple-100">
+                            <td colSpan={columns.length} className="px-5 py-4 max-w-none">
+                              {renderExpandedRow(item)}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
 
           {/* 4. Mobile Card Layout (below md) */}
-          <div className="md:hidden p-3.5 space-y-3 bg-[#fafafc]">
+          <div className="md:hidden p-0 space-y-3 bg-[#fafafc]">
             {currentItems.map((item) =>
               renderMobileCard ? (
                 <div key={item.id}>{renderMobileCard(item)}</div>
               ) : (
                 <div
                   key={item.id}
-                  className="p-3.5 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-1.5 text-[12px]"
+                  className="p-3.5 mb-2 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs space-y-1.5 text-[12px]"
                 >
                   {columns.map((col) => (
                     <div key={col.key} className="flex justify-between items-center py-0.5">
