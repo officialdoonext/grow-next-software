@@ -321,14 +321,26 @@ export default function AddCustomAttributeModal({
             </div>
 
             {dataType === "Boolean" ? (
-              <select
-                value={defaultValue}
-                onChange={(e) => setDefaultValue(e.target.value)}
-                className="w-full h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal cursor-pointer"
-              >
-                <option value="false">False (No)</option>
-                <option value="true">True (Yes)</option>
-              </select>
+              <div className="flex items-center justify-between h-[34px] max-h-[34px] px-3 bg-[#f8fafc] border border-slate-200 rounded-[6px]">
+                <span className="text-[12.5px] font-medium text-slate-700">
+                  {defaultValue === "true" ? "True (Yes / Enabled)" : "False (No / Disabled)"}
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={defaultValue === "true"}
+                  onClick={() => setDefaultValue(defaultValue === "true" ? "false" : "true")}
+                  className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-[4px] border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    defaultValue === "true" ? "bg-[#6024a8]" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-[3px] bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      defaultValue === "true" ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
             ) : dataType === "List" ? (
               <select
                 value={defaultValue}

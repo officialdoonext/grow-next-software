@@ -5,8 +5,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   getDocs,
   addDoc,
   doc,
@@ -47,27 +45,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Unauthorized access" }, { status: 401 });
     }
 
-    // Query by userId without requiring manual composite index
+    // Query strictly filtered by userId
     const q = query(
-      collection(db, "customers"),
+      collection(db, "leads"),
       where("userId", "==", userEmail)
     );
 
     const snapshot = await getDocs(q);
-    const customers: any[] = [];
+    const leads: any[] = [];
     snapshot.forEach((d) => {
-      customers.push({ id: d.id, ...d.data() });
+      leads.push({ id: d.id, ...d.data() });
     });
 
     // Sort recent first
-    customers.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    leads.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-    // Strictly limit 24 items
-    const recentCustomers = customers.slice(0, 24);
+    // Strictly limit to 24 items
+    const recentLeads = leads.slice(0, 24);
 
-    return NextResponse.json({ success: true, customers: recentCustomers });
+    return NextResponse.json({ success: true, leads: recentLeads });
   } catch (err: any) {
-    console.error("[Get Customers API Error]", err);
+    console.error("[Get Leads API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
@@ -80,36 +78,36 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, mobile, email, city, customAttributes } = body;
+    const { customerName, businessName, mobile, email, customAttributes } = body;
 
-    if (!name?.trim() || !mobile?.trim() || !city?.trim()) {
+    if (!customerName?.trim() || !businessName?.trim() || !mobile?.trim()) {
       return NextResponse.json(
-        { success: false, error: "Customer Name, Mobile Number, and City are required." },
+        { success: false, error: "Customer Name, Business Name, and Mobile Number are required." },
         { status: 400 }
       );
     }
 
     const now = new Date().toISOString();
-    const newCustomer = {
-      name: name.trim(),
+    const newLead = {
+      customerName: customerName.trim(),
+      businessName: businessName.trim(),
       mobile: mobile.trim(),
       email: email?.trim() ? email.trim().toLowerCase() : "",
-      city: city.trim(),
       customAttributes: customAttributes && typeof customAttributes === "object" ? customAttributes : {},
       userId: userEmail, // Strict multi-tenant isolation
       createdAt: now,
       updatedAt: now,
     };
 
-    const docRef = await addDoc(collection(db, "customers"), newCustomer);
+    const docRef = await addDoc(collection(db, "leads"), newLead);
 
     return NextResponse.json({
       success: true,
-      message: "Customer added successfully.",
-      customer: { id: docRef.id, ...newCustomer },
+      message: "Lead added successfully.",
+      lead: { id: docRef.id, ...newLead },
     });
   } catch (err: any) {
-    console.error("[Create Customer API Error]", err);
+    console.error("[Create Lead API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
@@ -123,25 +121,25 @@ export async function DELETE(req: NextRequest) {
 
     const { id } = await req.json();
     if (!id) {
-      return NextResponse.json({ success: false, error: "Customer ID is required." }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Lead ID is required." }, { status: 400 });
     }
 
-    const docRef = doc(db, "customers", id);
+    const docRef = doc(db, "leads", id);
     const snap = await getDoc(docRef);
 
     if (!snap.exists()) {
-      return NextResponse.json({ success: false, error: "Customer not found." }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Lead not found." }, { status: 404 });
     }
 
     // Verify ownership
     if (snap.data().userId !== userEmail) {
-      return NextResponse.json({ success: false, error: "Unauthorized to delete this customer." }, { status: 403 });
+      return NextResponse.json({ success: false, error: "Unauthorized to delete this lead." }, { status: 403 });
     }
 
     await deleteDoc(docRef);
-    return NextResponse.json({ success: true, message: "Customer deleted successfully." });
+    return NextResponse.json({ success: true, message: "Lead deleted successfully." });
   } catch (err: any) {
-    console.error("[Delete Customer API Error]", err);
+    console.error("[Delete Lead API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
@@ -155,14 +153,14 @@ export async function PATCH(req: NextRequest) {
 
     const { id, customAttributes } = await req.json();
     if (!id) {
-      return NextResponse.json({ success: false, error: "Customer ID is required." }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Lead ID is required." }, { status: 400 });
     }
 
-    const docRef = doc(db, "customers", id);
+    const docRef = doc(db, "leads", id);
     const snap = await getDoc(docRef);
 
     if (!snap.exists()) {
-      return NextResponse.json({ success: false, error: "Customer not found." }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Lead not found." }, { status: 404 });
     }
 
     if (snap.data().userId !== userEmail) {
@@ -177,9 +175,9 @@ export async function PATCH(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({ success: true, message: "Customer updated successfully." });
+    return NextResponse.json({ success: true, message: "Lead updated successfully." });
   } catch (err: any) {
-    console.error("[Patch Customer API Error]", err);
+    console.error("[Patch Lead API Error]", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

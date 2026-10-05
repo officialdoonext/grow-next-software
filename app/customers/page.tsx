@@ -81,6 +81,39 @@ export default function CustomersPage() {
     }
   };
 
+  const handleToggleBooleanAttr = async (customerId: string, key: string, newValue: boolean) => {
+    try {
+      // Optimistic local update
+      setCustomers((prev) =>
+        prev.map((c) =>
+          c.id === customerId
+            ? {
+                ...c,
+                customAttributes: {
+                  ...(c.customAttributes || {}),
+                  [key]: newValue,
+                },
+              }
+            : c
+        )
+      );
+
+      const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
+      const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
+
+      await fetch(`/api/customers${query}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: customerId,
+          customAttributes: { [key]: newValue },
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to toggle attribute:", err);
+    }
+  };
+
   // Filtered by search query
   const filteredCustomers = customers.filter((c) => {
     if (!searchQuery.trim()) return true;
@@ -114,6 +147,40 @@ export default function CustomersPage() {
                 {Object.entries(item.customAttributes).map(([k, v]) => {
                   if (v === undefined || v === null || v === "") return null;
                   const displayKey = k.replace(/_/g, " ");
+                  const isBool = typeof v === "boolean" || v === "true" || v === "false";
+                  const boolVal = v === true || v === "true";
+
+                  if (isBool) {
+                    return (
+                      <div
+                        key={k}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px]"
+                      >
+                        <span className="capitalize text-slate-500">{displayKey}:</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={boolVal}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleBooleanAttr(item.id, k, !boolVal);
+                          }}
+                          title={`Click to toggle ${displayKey}`}
+                          className={`relative inline-flex h-3.5 w-6.5 shrink-0 cursor-pointer rounded-[3px] border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            boolVal ? "bg-[#6024a8]" : "bg-slate-300"
+                          }`}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              boolVal ? "translate-x-3" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                        <span className="font-medium text-[9.5px]">{boolVal ? "ON" : "OFF"}</span>
+                      </div>
+                    );
+                  }
+
                   return (
                     <span
                       key={k}
@@ -237,6 +304,40 @@ export default function CustomersPage() {
           {Object.entries(item.customAttributes).map(([k, v]) => {
             if (v === undefined || v === null || v === "") return null;
             const displayKey = k.replace(/_/g, " ");
+            const isBool = typeof v === "boolean" || v === "true" || v === "false";
+            const boolVal = v === true || v === "true";
+
+            if (isBool) {
+              return (
+                <div
+                  key={k}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-[4px] bg-purple-50/70 border border-purple-100 text-[#6024a8] text-[10px]"
+                >
+                  <span className="capitalize text-slate-500">{displayKey}:</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={boolVal}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleBooleanAttr(item.id, k, !boolVal);
+                    }}
+                    title={`Click to toggle ${displayKey}`}
+                    className={`relative inline-flex h-3.5 w-6.5 shrink-0 cursor-pointer rounded-[3px] border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      boolVal ? "bg-[#6024a8]" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        boolVal ? "translate-x-3" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                  <span className="font-medium text-[9.5px]">{boolVal ? "ON" : "OFF"}</span>
+                </div>
+              );
+            }
+
             return (
               <span
                 key={k}

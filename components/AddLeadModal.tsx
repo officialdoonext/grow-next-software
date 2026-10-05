@@ -1,27 +1,27 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Phone, Mail, Building, X, AlertCircle, RefreshCw, Check, Sparkles } from "lucide-react";
+import { User, Briefcase, Phone, Mail, X, AlertCircle, RefreshCw, Check, Sparkles } from "lucide-react";
 import { CustomAttribute } from "./AddCustomAttributeModal";
 
-interface AddCustomerModalProps {
+interface AddLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newCustomer: any) => void;
+  onSuccess: (newLead: any) => void;
 }
 
-export default function AddCustomerModal({
+export default function AddLeadModal({
   isOpen,
   onClose,
   onSuccess,
-}: AddCustomerModalProps) {
-  // Core Customer Fields
-  const [name, setName] = useState("");
+}: AddLeadModalProps) {
+  // Core Lead Fields
+  const [customerName, setCustomerName] = useState("");
+  const [businessName, setBusinessName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
-  const [city, setCity] = useState("");
 
-  // Dynamic Custom Attributes
+  // Dynamic Custom Attributes for Leads
   const [customAttributes, setCustomAttributes] = useState<CustomAttribute[]>([]);
   const [customValues, setCustomValues] = useState<Record<string, any>>({});
   const [loadingAttributes, setLoadingAttributes] = useState(false);
@@ -29,16 +29,16 @@ export default function AddCustomerModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch customer custom attributes when modal opens
+  // Fetch custom attributes for "leads" when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
     let isMounted = true;
-    async function fetchCustomerAttributes() {
+    async function fetchLeadAttributes() {
       setLoadingAttributes(true);
       try {
         const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
-        const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}&entity=customers` : "?entity=customers";
+        const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}&entity=leads` : "?entity=leads";
 
         const res = await fetch(`/api/custom-attributes${query}`);
         const data = await res.json();
@@ -60,13 +60,13 @@ export default function AddCustomerModal({
           setCustomValues(initialVals);
         }
       } catch (err) {
-        console.warn("[Error fetching customer custom attributes]", err);
+        console.warn("[Error fetching lead custom attributes]", err);
       } finally {
         if (isMounted) setLoadingAttributes(false);
       }
     }
 
-    fetchCustomerAttributes();
+    fetchLeadAttributes();
 
     return () => {
       isMounted = false;
@@ -87,16 +87,16 @@ export default function AddCustomerModal({
     setError(null);
 
     // Validate Core Fields
-    if (!name.trim()) {
+    if (!customerName.trim()) {
       setError("Please enter the customer name.");
+      return;
+    }
+    if (!businessName.trim()) {
+      setError("Please enter the business name.");
       return;
     }
     if (!mobile.trim()) {
       setError("Please enter the mobile number.");
-      return;
-    }
-    if (!city.trim()) {
-      setError("Please enter the city.");
       return;
     }
 
@@ -117,14 +117,14 @@ export default function AddCustomerModal({
       const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
       const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
 
-      const res = await fetch(`/api/customers${query}`, {
+      const res = await fetch(`/api/leads${query}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
+          customerName: customerName.trim(),
+          businessName: businessName.trim(),
           mobile: mobile.trim(),
           email: email.trim(),
-          city: city.trim(),
           customAttributes: customValues,
         }),
       });
@@ -132,20 +132,20 @@ export default function AddCustomerModal({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to add customer");
+        throw new Error(data.error || "Failed to add lead");
       }
 
       // Reset form
-      setName("");
+      setCustomerName("");
+      setBusinessName("");
       setMobile("");
       setEmail("");
-      setCity("");
       setCustomValues({});
 
-      onSuccess(data.customer);
+      onSuccess(data.lead);
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to save customer.");
+      setError(err.message || "Failed to save lead.");
     } finally {
       setLoading(false);
     }
@@ -172,7 +172,7 @@ export default function AddCustomerModal({
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>
             <h3 className="text-[14.5px] font-medium text-slate-900 flex items-center gap-1.5">
-              <span>Add New Customer</span>
+              <span>Add New Lead</span>
               {hasCustomAttributes && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-100">
                   +{customAttributes.length} Custom {customAttributes.length === 1 ? "Field" : "Fields"}
@@ -180,7 +180,7 @@ export default function AddCustomerModal({
               )}
             </h3>
             <p className="text-[11px] text-slate-400">
-              Enter customer contact information and configured business attributes
+              Capture customer inquiry, business details, and custom metadata
             </p>
           </div>
           <button
@@ -200,11 +200,11 @@ export default function AddCustomerModal({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* SECTION 1: Standard Customer Details */}
+          {/* SECTION 1: Core Lead Details */}
           <div>
             {hasCustomAttributes && (
               <div className="text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5">
-                Standard Information
+                Lead Contact & Business Details
               </div>
             )}
 
@@ -223,15 +223,33 @@ export default function AddCustomerModal({
                   <input
                     type="text"
                     required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Ramesh Kumar"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="e.g. Rajesh Sharma"
                     className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
                   />
                 </div>
               </div>
 
-              {/* 2. Mobile Number (Required) */}
+              {/* 2. Business Name (Required) */}
+              <div>
+                <label className="block text-[12px] font-medium text-slate-700 mb-1">
+                  Business Name <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Briefcase size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    placeholder="e.g. Sharma Enterprises Ltd"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Mobile Number (Required) */}
               <div>
                 <label className="block text-[12px] font-medium text-slate-700 mb-1">
                   Mobile Number <span className="text-rose-500">*</span>
@@ -249,7 +267,7 @@ export default function AddCustomerModal({
                 </div>
               </div>
 
-              {/* 3. Email (Optional) */}
+              {/* 4. Email Address (Optional) */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="text-[12px] font-medium text-slate-700">
@@ -263,25 +281,7 @@ export default function AddCustomerModal({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="customer@domain.com (optional)"
-                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-                  />
-                </div>
-              </div>
-
-              {/* 4. City (Required) */}
-              <div>
-                <label className="block text-[12px] font-medium text-slate-700 mb-1">
-                  City <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <Building size={14} className="absolute left-2.5 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="e.g. Hyderabad, Nellore, Bangalore"
+                    placeholder="contact@business.com (optional)"
                     className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
                   />
                 </div>
@@ -289,12 +289,12 @@ export default function AddCustomerModal({
             </div>
           </div>
 
-          {/* SECTION 2: Dynamic Custom Attributes */}
+          {/* SECTION 2: Dynamic Custom Attributes for Leads */}
           {hasCustomAttributes && (
             <div className="pt-3 border-t border-slate-100">
               <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 uppercase tracking-wider mb-2.5">
                 <Sparkles size={12} className="text-[#6024a8]" />
-                <span>Custom Attributes</span>
+                <span>Lead Custom Attributes</span>
               </div>
 
               <div
@@ -406,12 +406,12 @@ export default function AddCustomerModal({
               {loading ? (
                 <>
                   <RefreshCw size={13} className="animate-spin" />
-                  <span>Saving Customer...</span>
+                  <span>Saving Lead...</span>
                 </>
               ) : (
                 <>
                   <Check size={14} />
-                  <span>Save Customer</span>
+                  <span>Save Lead</span>
                 </>
               )}
             </button>

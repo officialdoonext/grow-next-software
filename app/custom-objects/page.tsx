@@ -237,6 +237,27 @@ export default function CustomObjectsPage() {
       key: "defaultValue",
       header: "Default Value",
       render: (item) => {
+        if (item.dataType === "Boolean") {
+          const isTrue = item.defaultValue === true || item.defaultValue === "true";
+          return (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`relative inline-flex h-4 w-7 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
+                  isTrue ? "bg-[#6024a8]" : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-3 w-3 transform rounded-[2px] bg-white shadow transition duration-200 ${
+                    isTrue ? "translate-x-3" : "translate-x-0"
+                  }`}
+                />
+              </span>
+              <span className={`text-[11px] font-medium ${isTrue ? "text-[#6024a8]" : "text-slate-500"}`}>
+                {isTrue ? "True (ON)" : "False (OFF)"}
+              </span>
+            </div>
+          );
+        }
         if (item.defaultValue !== undefined && item.defaultValue !== "" && item.defaultValue !== null) {
           return (
             <span className="text-slate-700 text-[12px] font-mono bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
@@ -313,9 +334,32 @@ export default function CustomObjectsPage() {
       )}
 
       {item.defaultValue !== undefined && item.defaultValue !== "" && (
-        <div className="text-[11px] text-slate-500">
+        <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
           <span className="text-slate-400">Default: </span>
-          <span className="font-mono text-slate-700">{String(item.defaultValue)}</span>
+          {item.dataType === "Boolean" ? (
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`relative inline-flex h-3.5 w-6 shrink-0 rounded-[3px] border border-transparent transition-colors duration-200 ${
+                  item.defaultValue === true || item.defaultValue === "true"
+                    ? "bg-[#6024a8]"
+                    : "bg-slate-300"
+                }`}
+              >
+                <span
+                  className={`inline-block h-2.5 w-2.5 transform rounded-[2px] bg-white shadow transition duration-200 ${
+                    item.defaultValue === true || item.defaultValue === "true"
+                      ? "translate-x-2.5"
+                      : "translate-x-0"
+                  }`}
+                />
+              </span>
+              <span className="font-medium text-[10px] text-slate-700">
+                {item.defaultValue === true || item.defaultValue === "true" ? "True (ON)" : "False (OFF)"}
+              </span>
+            </div>
+          ) : (
+            <span className="font-mono text-slate-700">{String(item.defaultValue)}</span>
+          )}
         </div>
       )}
     </div>
