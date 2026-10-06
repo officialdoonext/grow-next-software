@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
 import AddCustomAttributeModal, { CustomAttribute } from "@/components/AddCustomAttributeModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
+import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
   Users2,
@@ -26,6 +27,9 @@ import {
   RefreshCw,
   CheckCircle2,
   BarChart2,
+  TrendingUp,
+  Clock,
+  Box,
   Image as ImageIcon,
   Music,
 } from "lucide-react";
@@ -481,44 +485,63 @@ export default function CustomObjectsPage() {
     }
   };
 
+  const totalAttrs = attributes.length;
+  const leadAttrs = attributes.filter((a) => a.entity?.toLowerCase() === "leads").length;
+  const custAttrs = attributes.filter((a) => a.entity?.toLowerCase() === "customers").length;
+  const financeAttrs = attributes.filter(
+    (a) => a.entity?.toLowerCase() === "quotations" || a.entity?.toLowerCase() === "invoices"
+  ).length;
+
+  const statCards: StatCardItem[] = [
+    {
+      title: "Total Attributes",
+      value: totalAttrs,
+      trendText: "↑ 0%",
+      subtext: "across modules",
+      colorScheme: "purple",
+      icon: <Box size={18} />,
+    },
+    {
+      title: "Lead Attributes",
+      value: leadAttrs,
+      trendText: `${leadAttrs}`,
+      subtext: "custom fields",
+      colorScheme: "emerald",
+      icon: <Users2 size={18} />,
+    },
+    {
+      title: "Customer Fields",
+      value: custAttrs,
+      trendText: `${custAttrs}`,
+      subtext: "custom fields",
+      colorScheme: "orange",
+      icon: <Building2 size={18} />,
+    },
+    {
+      title: "Quotations & Invoices",
+      value: financeAttrs,
+      trendText: `${financeAttrs}`,
+      subtext: "custom fields",
+      colorScheme: "blue",
+      icon: <FileSpreadsheet size={18} />,
+    },
+  ];
+
   return (
     <SoftwareLayout pageTitle="Custom Objects">
       <div className="space-y-4">
-        {/* 1. Hero Banner matching design mockup */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
-          </div>
-
-          <div className="relative z-10">
-            <h1 className="text-[24px] sm:text-[26px] font-medium text-slate-900 tracking-tight">
-              Custom Objects
-            </h1>
-            <p className="text-[12.5px] text-slate-500 font-normal mt-1 max-w-xl">
-              Configure tailored data attributes, qualification criteria, and custom schemas.
-            </p>
-          </div>
-
-          <div className="relative z-10 bg-white rounded-[8px] border border-purple-100/90 p-3 sm:p-3.5 shadow-sm flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-[6px] bg-[#f4ecfc] text-[#6024a8] flex items-center justify-center shrink-0">
-              <BarChart2 size={18} />
-            </div>
-            <div>
-              <div className="text-[20px] font-medium text-slate-900 leading-none">
-                {attributes.length}
-              </div>
-              <span className="text-[11px] text-slate-400 font-normal">Total Attributes</span>
-            </div>
-            <div className="pl-3 border-l border-slate-100 text-right">
-              <span className="text-[#059669] text-[11px] font-medium flex items-center justify-end gap-0.5">
-                ↗ 0%
-              </span>
-              <span className="text-[9.5px] text-slate-400 block whitespace-nowrap">
-                across entities
-              </span>
-            </div>
-          </div>
+        {/* Page Title & Subtitle matching redesign mockup */}
+        <div>
+          <h1 className="text-[26px] font-medium text-slate-900 tracking-tight">
+            Custom Objects
+          </h1>
+          <p className="text-[12.5px] text-slate-500 font-normal mt-0.5">
+            Configure tailored data attributes, qualification criteria, and custom schemas.
+          </p>
         </div>
+
+        {/* 4 Stat Cards */}
+        <StatCardGrid cards={statCards} />
 
         <div className="flex flex-col lg:flex-row gap-5 items-start">
           {/* 1. Left Sub-Sidebar (Desktop: 220px, Mobile: Full Width) */}

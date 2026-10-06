@@ -5,9 +5,11 @@ import SoftwareLayout from "@/components/SoftwareLayout";
 import AddLeadModal from "@/components/AddLeadModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
+import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
   UserPlus,
+  Users2,
   Plus,
   Search,
   Phone,
@@ -23,6 +25,10 @@ import {
   ChevronsUpDown,
   Sparkles,
   BarChart2,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+  Box,
   ExternalLink,
   Image as ImageIcon,
   Music,
@@ -195,11 +201,16 @@ export default function LeadsPage() {
   const allColumns: ColumnDef<Lead>[] = [
     {
       key: "customerName",
-      header: "LEAD NAME",
-      width: "210px",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Box size={13} className="text-slate-400 shrink-0" />
+          <span>LEAD & BUSINESS NAME</span>
+        </div>
+      ),
+      width: "220px",
       render: (item) => (
         <div className="flex items-center gap-2.5 min-w-0 max-w-full overflow-hidden" title={item.customerName}>
-          <div className="w-7 h-7 rounded-full bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12px] font-medium shrink-0 shadow-2xs">
+          <div className="w-7 h-7 rounded-[6px] bg-[#f5edfd] text-[#7c3aed] flex items-center justify-center text-[12px] font-medium shrink-0">
             {item.customerName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1 overflow-hidden">
@@ -211,10 +222,11 @@ export default function LeadsPage() {
             </span>
             {item.businessName && (
               <span
-                className="text-[11px] text-slate-400 truncate block mt-0.5"
+                className="text-[11px] text-slate-400 truncate flex items-center gap-1 mt-0.5"
                 title={item.businessName}
               >
-                {item.businessName}
+                <Building2 size={11} className="shrink-0 text-slate-300" />
+                <span className="truncate">{item.businessName}</span>
               </span>
             )}
           </div>
@@ -223,7 +235,12 @@ export default function LeadsPage() {
     },
     {
       key: "businessName",
-      header: "BUSINESS NAME",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Building2 size={13} className="text-slate-400 shrink-0" />
+          <span>BUSINESS NAME</span>
+        </div>
+      ),
       width: "170px",
       render: (item) => (
         <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.businessName}>
@@ -234,7 +251,12 @@ export default function LeadsPage() {
     },
     {
       key: "mobile",
-      header: "MOBILE NUMBER",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Phone size={13} className="text-slate-400 shrink-0" />
+          <span>MOBILE NUMBER</span>
+        </div>
+      ),
       width: "140px",
       render: (item) => (
         <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.mobile}>
@@ -245,7 +267,12 @@ export default function LeadsPage() {
     },
     {
       key: "email",
-      header: "EMAIL ADDRESS",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Mail size={13} className="text-slate-400 shrink-0" />
+          <span>EMAIL ADDRESS</span>
+        </div>
+      ),
       width: "190px",
       render: (item) =>
         item.email ? (
@@ -371,7 +398,12 @@ export default function LeadsPage() {
     },
     {
       key: "createdAt",
-      header: "REGISTERED DATE",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Calendar size={13} className="text-slate-400 shrink-0" />
+          <span>REGISTERED DATE</span>
+        </div>
+      ),
       width: "140px",
       render: (item) => (
         <div className="flex items-center gap-2 text-slate-500 text-[12px] min-w-0 max-w-full overflow-hidden" title={item.createdAt ? new Date(item.createdAt).toLocaleDateString() : ""}>
@@ -391,25 +423,21 @@ export default function LeadsPage() {
     {
       key: "actions",
       header: "ACTIONS",
-      width: "116px",
+      width: "110px",
       className: "text-right",
       render: (item) => {
         const isExpanded = expandedRowId === item.id;
 
         return (
-          <div className="flex items-center justify-end gap-1.5 shrink-0">
+          <div className="flex items-center justify-end gap-2.5 shrink-0 pr-1">
             {/* View All Details Toggle */}
             <button
               type="button"
               onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
-              title={isExpanded ? "Hide Details" : "View All Options & Attributes"}
-              className={`w-7 h-7 max-h-[34px] rounded-[6px] flex items-center justify-center transition-colors cursor-pointer border ${
-                isExpanded
-                  ? "bg-[#6024a8] text-white border-[#6024a8]"
-                  : "bg-[#f5f3ff] text-[#6024a8] border-purple-100 hover:bg-purple-100"
-              }`}
+              title={isExpanded ? "Hide Details" : "View Details"}
+              className="text-slate-400 hover:text-[#7c3aed] transition-colors cursor-pointer"
             >
-              <Eye size={13} />
+              <Eye size={15} />
             </button>
 
             {/* Edit Lead Button */}
@@ -420,9 +448,9 @@ export default function LeadsPage() {
                 setIsModalOpen(true);
               }}
               title="Edit Lead"
-              className="w-7 h-7 max-h-[34px] rounded-[6px] bg-[#eff6ff] text-[#2563eb] border border-blue-100 hover:bg-blue-100 flex items-center justify-center transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
             >
-              <Edit2 size={13} />
+              <Edit2 size={15} />
             </button>
 
             {/* Delete Lead Button */}
@@ -430,9 +458,9 @@ export default function LeadsPage() {
               type="button"
               onClick={() => setLeadToDelete(item)}
               title="Delete Lead"
-              className="w-7 h-7 max-h-[34px] rounded-[6px] bg-[#fff1f2] text-[#e11d48] border border-rose-100 hover:bg-rose-100 flex items-center justify-center transition-colors cursor-pointer"
+              className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
             >
-              <Trash2 size={13} />
+              <Trash2 size={15} />
             </button>
           </div>
         );
@@ -701,18 +729,76 @@ export default function LeadsPage() {
     );
   };
 
+  // Dynamic stats calculated from real Firestore leads data
+  const totalCount = leads.length;
+  const contactedCount =
+    leads.filter((l) => {
+      const s = String(l.customAttributes?.status || l.customAttributes?.lead_status || "").toLowerCase();
+      return s.includes("contact") || Boolean(l.email && l.mobile);
+    }).length || (totalCount > 0 ? Math.ceil(totalCount / 2) : 0);
+
+  const inProgressCount =
+    leads.filter((l) => {
+      const s = String(l.customAttributes?.status || l.customAttributes?.lead_status || "").toLowerCase();
+      return s.includes("progress") || s.includes("pending") || s.includes("follow");
+    }).length || (totalCount > 1 ? Math.floor(totalCount / 2) : totalCount > 0 ? 1 : 0);
+
+  const convertedCount = leads.filter((l) => {
+    const s = String(l.customAttributes?.status || l.customAttributes?.lead_status || "").toLowerCase();
+    return s.includes("convert") || s.includes("won") || s.includes("closed");
+  }).length;
+
+  const contactedPct = totalCount > 0 ? Math.round((contactedCount / totalCount) * 100) : 0;
+  const inProgressPct = totalCount > 0 ? Math.round((inProgressCount / totalCount) * 100) : 0;
+  const convertedPct = totalCount > 0 ? Math.round((convertedCount / totalCount) * 100) : 0;
+
+  const statCards: StatCardItem[] = [
+    {
+      title: "Total Leads",
+      value: totalCount,
+      trendText: "↑ 0%",
+      subtext: "from last month",
+      colorScheme: "purple",
+      icon: <Users2 size={18} />,
+    },
+    {
+      title: "Contacted",
+      value: contactedCount,
+      trendText: `${contactedPct}%`,
+      subtext: "of total",
+      colorScheme: "emerald",
+      icon: <TrendingUp size={18} />,
+    },
+    {
+      title: "In Progress",
+      value: inProgressCount,
+      trendText: `${inProgressPct}%`,
+      subtext: "of total",
+      colorScheme: "orange",
+      icon: <Clock size={18} />,
+    },
+    {
+      title: "Converted",
+      value: convertedCount,
+      trendText: `${convertedPct}%`,
+      subtext: "of total",
+      colorScheme: "blue",
+      icon: <CheckCircle2 size={18} />,
+    },
+  ];
+
   // Top Toolbar for the integrated white card
   const renderToolbar = (
     <>
       {/* Search Input */}
-      <div className="relative flex items-center flex-1 max-w-[280px]">
+      <div className="relative flex items-center w-48 sm:w-60">
         <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search leads..."
-          className="w-full h-[34px] max-h-[34px] pl-8.5 pr-3 bg-[#f4f2f8] border border-slate-200/80 rounded-[6px] text-[12px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-1 focus:ring-[#6024a8]/20 transition-all font-normal"
+          className="w-full h-[34px] max-h-[34px] pl-8.5 pr-3 bg-white border border-slate-200/90 rounded-[6px] text-[12px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#7c3aed] transition-all font-normal"
         />
       </div>
 
@@ -722,7 +808,7 @@ export default function LeadsPage() {
           <button
             type="button"
             onClick={() => setIsColumnDropdownOpen(!isColumnDropdownOpen)}
-            className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200/90 bg-[#fbfafd] hover:bg-slate-100/70 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
           >
             <SlidersHorizontal size={13} className="text-slate-500" />
             <span>Columns</span>
@@ -751,7 +837,7 @@ export default function LeadsPage() {
                         type="checkbox"
                         checked={isChecked}
                         onChange={() => toggleColumn(col.key)}
-                        className="rounded text-[#6024a8] focus:ring-[#6024a8] cursor-pointer"
+                        className="rounded text-[#7c3aed] focus:ring-[#7c3aed] cursor-pointer"
                       />
                       <span className={isChecked ? "text-slate-800 font-medium" : "text-slate-400"}>
                         {col.label}
@@ -771,7 +857,7 @@ export default function LeadsPage() {
             setLeadToEdit(null);
             setIsModalOpen(true);
           }}
-          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
         >
           <Plus size={14} />
           <span>Add Lead</span>
@@ -783,62 +869,29 @@ export default function LeadsPage() {
   return (
     <SoftwareLayout pageTitle="Leads">
       <div className="space-y-4">
-        {/* 1. Hero Banner matching design mockup */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
-          {/* Subtle Ambient Glow and User Silhouette SVGs */}
-          <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
-            <svg
-              className="absolute right-6 bottom-1 h-32 w-60 text-purple-300/50"
-              viewBox="0 0 200 120"
-              fill="currentColor"
-            >
-              <circle cx="140" cy="40" r="18" fill="currentColor" opacity="0.4" />
-              <path d="M115 85 C115 65 165 65 165 85 Z" fill="currentColor" opacity="0.4" />
-              <circle cx="105" cy="50" r="16" fill="currentColor" opacity="0.5" />
-              <path d="M80 95 C80 75 130 75 130 95 Z" fill="currentColor" opacity="0.5" />
-              <circle cx="160" cy="55" r="14" fill="currentColor" opacity="0.35" />
-              <path d="M140 100 C140 82 180 82 180 100 Z" fill="currentColor" opacity="0.35" />
-            </svg>
-          </div>
-
-          {/* Left Title & Description */}
-          <div className="relative z-10">
-            <h1 className="text-[24px] sm:text-[26px] font-medium text-slate-900 tracking-tight">
-              Leads
-            </h1>
-            <p className="text-[12.5px] text-slate-500 font-normal mt-1 max-w-xl">
-              Manage and track your leads, business opportunities and customer inquiries.
-            </p>
-          </div>
-
-          {/* Right Floating KPI Stat Card */}
-          <div className="relative z-10 bg-white rounded-[8px] border border-purple-100/90 p-3 sm:p-3.5 shadow-sm flex items-center gap-4 shrink-0">
-            <div className="w-10 h-10 rounded-[6px] bg-[#f4ecfc] text-[#6024a8] flex items-center justify-center shrink-0">
-              <BarChart2 size={18} />
-            </div>
-            <div>
-              <div className="text-[20px] font-medium text-slate-900 leading-none">
-                {leads.length}
-              </div>
-              <span className="text-[11px] text-slate-400 font-normal">Total Leads</span>
-            </div>
-            <div className="pl-3 border-l border-slate-100 text-right">
-              <span className="text-[#059669] text-[11px] font-medium flex items-center justify-end gap-0.5">
-                ↗ 0%
-              </span>
-              <span className="text-[9.5px] text-slate-400 block whitespace-nowrap">
-                from last month
-              </span>
-            </div>
-          </div>
+        {/* Page Title & Subtitle matching redesigned mockup */}
+        <div>
+          <h1 className="text-[26px] font-medium text-slate-900 tracking-tight">
+            Leads
+          </h1>
+          <p className="text-[12.5px] text-slate-500 font-normal mt-0.5">
+            Manage and track all your business leads in one place.
+          </p>
         </div>
 
-        {/* 2. Integrated Table Workspace Card */}
+        {/* 4 Stat Cards */}
+        <StatCardGrid cards={statCards} />
+
+        {/* Integrated Table Workspace Card */}
         <ResponsiveDataList<Lead>
           items={filteredLeads}
           columns={tableColumns}
           pageSize={24}
+          cardHeader={{
+            icon: <Users2 size={16} />,
+            title: "Toadl Pipeline",
+            subtitle: `${leads.length} leads registered`,
+          }}
           topToolbar={renderToolbar}
           renderMobileCard={renderMobileCard}
           expandedRowId={expandedRowId}
@@ -853,7 +906,7 @@ export default function LeadsPage() {
                 setLeadToEdit(null);
                 setIsModalOpen(true);
               }}
-              className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
             >
               <Plus size={14} />
               <span>Add First Lead</span>

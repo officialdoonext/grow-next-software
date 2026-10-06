@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
+import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import AddInvoiceModal, { Invoice } from "@/components/AddInvoiceModal";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
@@ -12,6 +13,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  ChevronDown,
   Eye,
   Edit3,
   Trash2,
@@ -20,10 +22,12 @@ import {
   IndianRupee,
   Clock,
   CheckCircle2,
+  TrendingUp,
   AlertCircle,
   Mail,
   FileText,
   Sparkles,
+  Box,
   ExternalLink,
   Image as ImageIcon,
   Music,
@@ -214,11 +218,16 @@ export default function InvoicesPage() {
   const allColumns: ColumnDef<Invoice>[] = [
     {
       key: "invoiceNumber",
-      header: "INVOICE #",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Receipt size={13} className="text-slate-400 shrink-0" />
+          <span>INVOICE #</span>
+        </div>
+      ),
       width: "210px",
       render: (item) => (
         <div className="flex items-center gap-2.5 min-w-0 max-w-full overflow-hidden" title={item.invoiceNumber}>
-          <div className="w-7 h-7 rounded-[6px] bg-[#f3e8ff] text-[#6024a8] border border-purple-100/80 flex items-center justify-center text-[12px] font-mono font-medium shrink-0 shadow-2xs">
+          <div className="w-7 h-7 rounded-[6px] bg-[#f5edfd] text-[#7c3aed] flex items-center justify-center text-[12px] font-mono font-medium shrink-0 shadow-2xs">
             <Receipt size={14} />
           </div>
           <div className="min-w-0 flex-1 overflow-hidden">
@@ -240,7 +249,12 @@ export default function InvoicesPage() {
     },
     {
       key: "customerName",
-      header: "CUSTOMER / CLIENT",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Building2 size={13} className="text-slate-400 shrink-0" />
+          <span>CUSTOMER / CLIENT</span>
+        </div>
+      ),
       width: "170px",
       render: (item) => (
         <div className="flex items-center gap-2 text-slate-700 text-[12.5px] min-w-0 max-w-full overflow-hidden" title={item.customerName}>
@@ -251,7 +265,12 @@ export default function InvoicesPage() {
     },
     {
       key: "amount",
-      header: "INVOICE AMOUNT",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <IndianRupee size={13} className="text-slate-400 shrink-0" />
+          <span>INVOICE AMOUNT</span>
+        </div>
+      ),
       width: "140px",
       render: (item) => (
         <div className="flex items-center gap-1 font-medium text-slate-800 text-[12.5px]">
@@ -262,13 +281,23 @@ export default function InvoicesPage() {
     },
     {
       key: "status",
-      header: "PAYMENT STATUS",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Clock size={13} className="text-slate-400 shrink-0" />
+          <span>PAYMENT STATUS</span>
+        </div>
+      ),
       width: "125px",
       render: (item) => getStatusBadge(item.status),
     },
     {
       key: "issueDate",
-      header: "INVOICE DATE",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Calendar size={13} className="text-slate-400 shrink-0" />
+          <span>INVOICE DATE</span>
+        </div>
+      ),
       width: "125px",
       render: (item) => (
         <div className="flex items-center gap-1.5 text-slate-600 text-[12px] min-w-0 truncate" title={item.issueDate}>
@@ -279,7 +308,12 @@ export default function InvoicesPage() {
     },
     {
       key: "dueDate",
-      header: "DUE DATE",
+      header: (
+        <div className="flex items-center gap-1.5">
+          <Clock size={13} className="text-slate-400 shrink-0" />
+          <span>DUE DATE</span>
+        </div>
+      ),
       width: "125px",
       render: (item) => (
         <div className="flex items-center gap-1.5 text-slate-500 text-[12px] min-w-0 truncate" title={item.dueDate}>
@@ -570,38 +604,140 @@ export default function InvoicesPage() {
     </div>
   );
 
+  // Dynamic stats calculated from real Firestore invoices data
+  const totalCount = invoices.length;
+  const paidCount = invoices.filter((i) => i.status === "Paid").length;
+  const pendingCount = invoices.filter((i) => i.status === "Unpaid" || i.status === "Draft").length;
+  const overdueCount = invoices.filter((i) => i.status === "Overdue").length;
+
+  const paidPct = totalCount > 0 ? Math.round((paidCount / totalCount) * 100) : 0;
+  const pendingPct = totalCount > 0 ? Math.round((pendingCount / totalCount) * 100) : 0;
+  const overduePct = totalCount > 0 ? Math.round((overdueCount / totalCount) * 100) : 0;
+
+  const statCards: StatCardItem[] = [
+    {
+      title: "Total Invoices",
+      value: totalCount,
+      trendText: "↑ 0%",
+      subtext: "from last month",
+      colorScheme: "purple",
+      icon: <Receipt size={18} />,
+    },
+    {
+      title: "Paid Invoices",
+      value: paidCount,
+      trendText: `${paidPct}%`,
+      subtext: "of total",
+      colorScheme: "emerald",
+      icon: <CheckCircle2 size={18} />,
+    },
+    {
+      title: "Pending / Due",
+      value: pendingCount,
+      trendText: `${pendingPct}%`,
+      subtext: "of total",
+      colorScheme: "orange",
+      icon: <Clock size={18} />,
+    },
+    {
+      title: "Overdue",
+      value: overdueCount,
+      trendText: `${overduePct}%`,
+      subtext: "of total",
+      colorScheme: "blue",
+      icon: <FileText size={18} />,
+    },
+  ];
+
+  // Top Toolbar for integrated card
+  const renderToolbar = (
+    <>
+      <div className="relative flex items-center w-48 sm:w-60">
+        <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search invoices..."
+          className="w-full h-[34px] max-h-[34px] pl-8.5 pr-3 bg-white border border-slate-200/90 rounded-[6px] text-[12px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#7c3aed] transition-all font-normal"
+        />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+            className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+          >
+            <SlidersHorizontal size={13} className="text-slate-500" />
+            <span>Columns</span>
+            <ChevronDown size={12} className="text-slate-400" />
+          </button>
+
+          {showColumnDropdown && (
+            <>
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setShowColumnDropdown(false)}
+              />
+              <div className="absolute right-0 mt-1 w-56 bg-white rounded-[6px] border border-slate-200 shadow-xl p-2.5 z-50 text-[12px] space-y-1 animate-in fade-in zoom-in-95 duration-100">
+                <div className="text-[10.5px] font-medium text-slate-400 uppercase tracking-wider px-1 pb-1 border-b border-slate-100 mb-1">
+                  Toggle Columns
+                </div>
+                <div className="space-y-1 max-h-60 overflow-y-auto pt-1">
+                  {allColumns.map((col) => (
+                    <label
+                      key={col.key}
+                      className="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-slate-50 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleColumnKeys.includes(col.key)}
+                        onChange={() => toggleColumnVisibility(col.key)}
+                        className="rounded text-[#7c3aed] focus:ring-[#7c3aed] cursor-pointer"
+                      />
+                      <span className="truncate text-slate-700">
+                        {typeof col.header === "string" ? col.header : col.key}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setInvoiceToEdit(null);
+            setIsAddModalOpen(true);
+          }}
+          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+        >
+          <Plus size={14} />
+          <span>Add Invoice</span>
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <SoftwareLayout pageTitle="Invoices">
       <div className="space-y-4">
-        {/* 1. Hero Banner */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
-          </div>
-
-          <div className="relative z-10">
-            <h1 className="text-[24px] sm:text-[26px] font-medium text-slate-900 tracking-tight">
-              Invoices & Billing
-            </h1>
-            <p className="text-[12.5px] sm:text-[13px] text-slate-500 mt-1 max-w-xl font-normal leading-relaxed">
-              Track invoices, payment receipts, payment due dates, and settlement status with custom attributes and cloud media attachments.
-            </p>
-          </div>
-
-          <div className="relative z-10 flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setInvoiceToEdit(null);
-                setIsAddModalOpen(true);
-              }}
-              className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
-            >
-              <Plus size={14} />
-              <span>Add Invoice</span>
-            </button>
-          </div>
+        {/* Page Title & Subtitle matching redesigned mockup */}
+        <div>
+          <h1 className="text-[26px] font-medium text-slate-900 tracking-tight">
+            Invoices
+          </h1>
+          <p className="text-[12.5px] text-slate-500 font-normal mt-0.5">
+            Manage your billing, client invoices, and payment tracking in one place.
+          </p>
         </div>
+
+        {/* 4 Stat Cards */}
+        <StatCardGrid cards={statCards} />
 
         {/* Email feedback notification */}
         {emailNotification && (
@@ -630,66 +766,17 @@ export default function InvoicesPage() {
           </div>
         )}
 
-        {/* 2. Top Action Bar: Search & Column Visibility */}
-        <div className="bg-white rounded-[8px] border border-slate-200/90 p-3 shadow-[0_2px_8px_-2px_rgba(96,36,168,0.04)] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search invoice #, client, description, status, or amount..."
-              className="w-full h-[34px] max-h-[34px] pl-9 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Columns Selector Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowColumnDropdown(!showColumnDropdown)}
-                className="h-[34px] max-h-[34px] px-3 rounded-[6px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-              >
-                <SlidersHorizontal size={13} className="text-slate-500" />
-                <span>Columns ({visibleColumnKeys.length})</span>
-              </button>
-
-              {showColumnDropdown && (
-                <div className="absolute right-0 mt-1 w-56 bg-white rounded-[6px] border border-slate-200 shadow-xl p-2 z-40 animate-in fade-in duration-100">
-                  <div className="text-[11px] font-medium text-slate-400 px-2 py-1 uppercase tracking-wider">
-                    Toggle Columns
-                  </div>
-                  <div className="space-y-1 max-h-60 overflow-y-auto pt-1">
-                    {allColumns.map((col) => (
-                      <label
-                        key={col.key}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-[4px] hover:bg-slate-50 text-[12px] text-slate-700 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={visibleColumnKeys.includes(col.key)}
-                          onChange={() => toggleColumnVisibility(col.key)}
-                          className="rounded-[3px] text-[#6024a8] focus:ring-0 cursor-pointer"
-                        />
-                        <span className="truncate">{col.header}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Responsive Data List Table & Mobile Card UI */}
+        {/* Responsive Data List Table & Mobile Card UI */}
         <ResponsiveDataList<Invoice>
           items={filteredInvoices}
           columns={columns}
           isLoading={loading}
+          cardHeader={{
+            icon: <Receipt size={16} />,
+            title: "Invoice Registry",
+            subtitle: `${invoices.length} invoices recorded`,
+          }}
+          topToolbar={renderToolbar}
           expandedRowId={expandedRowId}
           renderExpandedRow={renderExpandedRow}
           emptyTitle="No Invoices Found"

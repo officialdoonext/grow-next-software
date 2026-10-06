@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
+import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import {
   Settings,
   User,
@@ -19,6 +20,9 @@ import {
   FileText,
   ShieldCheck,
   PenTool,
+  TrendingUp,
+  Clock,
+  Box,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -244,28 +248,53 @@ export default function SettingsPage() {
   return (
     <SoftwareLayout pageTitle="Settings">
       <div className="space-y-4 max-w-4xl mx-auto">
-        {/* 1. Hero Banner */}
-        <div className="relative overflow-hidden rounded-[8px] p-5 sm:p-6 bg-gradient-to-r from-white via-[#f7f1fe] to-[#ebe0fa] border border-purple-100/90 shadow-[0_4px_16px_-4px_rgba(96,36,168,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="absolute right-0 top-0 bottom-0 w-80 pointer-events-none overflow-hidden hidden md:block select-none">
-            <div className="absolute -right-8 -top-8 w-64 h-64 rounded-full bg-gradient-to-br from-purple-300/40 via-purple-200/25 to-transparent blur-2xl" />
-          </div>
-
-          <div className="relative z-10">
-            <h1 className="text-[24px] sm:text-[26px] font-medium text-slate-900 tracking-tight">
-              Account &amp; Business Settings
-            </h1>
-            <p className="text-[12.5px] sm:text-[13px] text-slate-500 mt-1 max-w-xl font-normal leading-relaxed">
-              Manage your business branding, profile details, and custom company logo displayed across software headers, invoices, and quotations.
-            </p>
-          </div>
-
-          <div className="relative z-10 flex items-center gap-2">
-            <span className="text-[11.5px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-2.5 py-1 rounded-[6px] flex items-center gap-1.5 shadow-2xs">
-              <ShieldCheck size={13} />
-              <span>Multi-Tenant Secured</span>
-            </span>
-          </div>
+        {/* Page Title & Subtitle matching redesign mockup */}
+        <div>
+          <h1 className="text-[26px] font-medium text-slate-900 tracking-tight">
+            Settings
+          </h1>
+          <p className="text-[12.5px] text-slate-500 font-normal mt-0.5">
+            Manage your company profile, business details, branding, and signatures.
+          </p>
         </div>
+
+        {/* 4 Stat Cards */}
+        <StatCardGrid
+          cards={[
+            {
+              title: "Account Profile",
+              value: name ? "Active" : "Pending",
+              trendText: "Isolated",
+              subtext: "multi-tenant",
+              colorScheme: "purple",
+              icon: <User size={18} />,
+            },
+            {
+              title: "Business Identity",
+              value: businessName ? "Verified" : "Setup",
+              trendText: businessName || "Company name",
+              subtext: "",
+              colorScheme: "emerald",
+              icon: <Building2 size={18} />,
+            },
+            {
+              title: "Branding Logo",
+              value: logoUrl || logoPreview ? "Custom" : "Default",
+              trendText: "Invoices & Quotes",
+              subtext: "",
+              colorScheme: "orange",
+              icon: <ImageIcon size={18} />,
+            },
+            {
+              title: "Digital Signature",
+              value: signatureUrl || signaturePreview ? "Configured" : "None",
+              trendText: "Print documents",
+              subtext: "",
+              colorScheme: "blue",
+              icon: <PenTool size={18} />,
+            },
+          ]}
+        />
 
         {/* 2. Success & Error Alerts */}
         {successMessage && (
