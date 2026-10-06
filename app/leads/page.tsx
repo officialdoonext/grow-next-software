@@ -6,6 +6,7 @@ import AddLeadModal from "@/components/AddLeadModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
 import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
+import DateRangeFilter, { DateFilterState, matchesDateFilter, getLocalTodayStr } from "@/components/DateRangeFilter";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
   UserPlus,
@@ -59,6 +60,13 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Date Filter State - defaults strictly to Today with custom date range support
+  const [dateFilter, setDateFilter] = useState<DateFilterState>({
+    type: "today",
+    customFrom: getLocalTodayStr(),
+    customTo: getLocalTodayStr(),
+  });
 
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -181,8 +189,12 @@ export default function LeadsPage() {
     }
   };
 
-  // Filtered by search query
+  // Filtered by date range and search query
   const filteredLeads = leads.filter((l) => {
+    // 1. Date Filter (defaults to Today)
+    if (!matchesDateFilter(l.createdAt, dateFilter)) return false;
+
+    // 2. Search Query
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase().trim();
     const hasMatchingAttr = l.customAttributes && Object.values(l.customAttributes).some(
@@ -791,7 +803,7 @@ export default function LeadsPage() {
   const renderToolbar = (
     <>
       {/* Search Input */}
-      <div className="relative flex items-center w-48 sm:w-60">
+      <div className="relative flex items-center w-40 sm:w-56">
         <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
         <input
           type="text"
@@ -802,7 +814,15 @@ export default function LeadsPage() {
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        {/* Date Filter (Default: Today + Custom Range) */}
+        <DateRangeFilter
+          value={dateFilter}
+          onChange={setDateFilter}
+          filteredCount={filteredLeads.length}
+          totalCount={leads.length}
+        />
+
         {/* Column Visibility Selector Dropdown */}
         <div className="relative">
           <button
@@ -882,6 +902,25 @@ export default function LeadsPage() {
         {/* 4 Stat Cards */}
         <StatCardGrid cards={statCards} />
 
+        {/* Date Filter Notification when zero leads match selected date filter */}
+        {!loading && leads.length > 0 && filteredLeads.length === 0 && (
+          <div className="p-3 rounded-[6px] bg-[#f5ecfc] border border-[#ede9fe] flex items-center justify-between text-[12px] text-slate-700 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-[#7c3aed]" />
+              <span>
+                No leads recorded for <strong>{dateFilter.type === "today" ? "Today" : "selected date range"}</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDateFilter({ type: "all", customFrom: "", customTo: "" })}
+              className="text-[11.5px] font-medium text-[#7c3aed] hover:underline cursor-pointer"
+            >
+              Show All {leads.length} Leads →
+            </button>
+          </div>
+        )}
+
         {/* Integrated Table Workspace Card */}
         <ResponsiveDataList<Lead>
           items={filteredLeads}
@@ -889,7 +928,7 @@ export default function LeadsPage() {
           pageSize={24}
           cardHeader={{
             icon: <Users2 size={16} />,
-            title: "Toadl Pipeline",
+            title: "Total Pipeline",
             subtitle: `${leads.length} leads registered`,
           }}
           topToolbar={renderToolbar}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import SoftwareLayout from "@/components/SoftwareLayout";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
 import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
+import DateRangeFilter, { DateFilterState, matchesDateFilter, getLocalTodayStr } from "@/components/DateRangeFilter";
 import AddInvoiceModal, { Invoice } from "@/components/AddInvoiceModal";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
@@ -37,6 +38,13 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Date Filter State - defaults strictly to Today with custom date range support
+  const [dateFilter, setDateFilter] = useState<DateFilterState>({
+    type: "today",
+    customFrom: getLocalTodayStr(),
+    customTo: getLocalTodayStr(),
+  });
 
   // Modals
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -95,8 +103,13 @@ export default function InvoicesPage() {
     };
   }, []);
 
-  // Filter invoices by search
+  // Filter invoices by date range and search query
   const filteredInvoices = invoices.filter((inv) => {
+    // 1. Date Filter (defaults to Today, checks issueDate or createdAt)
+    const invDate = inv.issueDate || inv.createdAt;
+    if (!matchesDateFilter(invDate, dateFilter)) return false;
+
+    // 2. Search query filter
     if (!searchQuery.trim()) return true;
     const term = searchQuery.toLowerCase().trim();
     const hasAttr =
@@ -652,7 +665,7 @@ export default function InvoicesPage() {
   // Top Toolbar for integrated card
   const renderToolbar = (
     <>
-      <div className="relative flex items-center w-48 sm:w-60">
+      <div className="relative flex items-center w-40 sm:w-56">
         <Search size={14} className="absolute left-3 text-slate-400 pointer-events-none" />
         <input
           type="text"
@@ -663,7 +676,15 @@ export default function InvoicesPage() {
         />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+        {/* Date Filter (Default: Today + Custom Range) */}
+        <DateRangeFilter
+          value={dateFilter}
+          onChange={setDateFilter}
+          filteredCount={filteredInvoices.length}
+          totalCount={invoices.length}
+        />
+
         <div className="relative">
           <button
             type="button"
@@ -738,6 +759,25 @@ export default function InvoicesPage() {
 
         {/* 4 Stat Cards */}
         <StatCardGrid cards={statCards} />
+
+        {/* Date Filter Notification when zero invoices match selected date filter */}
+        {!loading && invoices.length > 0 && filteredInvoices.length === 0 && (
+          <div className="p-3 rounded-[6px] bg-[#f5ecfc] border border-[#ede9fe] flex items-center justify-between text-[12px] text-slate-700 animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-[#7c3aed]" />
+              <span>
+                No invoices recorded for <strong>{dateFilter.type === "today" ? "Today" : "selected date range"}</strong>.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDateFilter({ type: "all", customFrom: "", customTo: "" })}
+              className="text-[11.5px] font-medium text-[#7c3aed] hover:underline cursor-pointer"
+            >
+              Show All {invoices.length} Invoices →
+            </button>
+          </div>
+        )}
 
         {/* Email feedback notification */}
         {emailNotification && (
