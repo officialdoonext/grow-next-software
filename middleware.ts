@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Software routes that require strict URL-level protection
 const PROTECTED_PREFIXES = [
+  "/home",
   "/dashboard",
   "/leads",
   "/quotations",
@@ -50,6 +51,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/home/:path*",
     "/dashboard/:path*",
     "/leads/:path*",
     "/quotations/:path*",

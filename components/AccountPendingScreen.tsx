@@ -161,7 +161,10 @@ export default function AccountPendingScreen({
             {isBothSatisfied ? (
               <button
                 type="button"
-                onClick={() => router.push("/dashboard")}
+                onClick={() => {
+                  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+                  router.push(isMobile ? "/home" : "/dashboard");
+                }}
                 className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <span>Enter GrowNext Software →</span>

@@ -74,7 +74,8 @@ export default function LoginScreen() {
             document.cookie = `grownext_user=${encodeURIComponent(data.user.email)}; path=/; max-age=2592000; SameSite=Lax`;
           }
           if (data.isApproved) {
-            router.push("/dashboard");
+            const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+            router.push(isMobile ? "/home" : "/dashboard");
             return;
           } else {
             setPendingUser(data.user);
@@ -218,7 +219,8 @@ export default function LoginScreen() {
         }
         // Profile exists: Check approval (Active status AND unexpired license)
         if (data.isApproved) {
-          router.push("/dashboard");
+          const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+          router.push(isMobile ? "/home" : "/dashboard");
         } else {
           // Account is inactive or expired
           setPendingUser(data.profile);
@@ -290,7 +292,8 @@ export default function LoginScreen() {
           if (data.user) {
             setPendingUser(data.user);
             if (data.isApproved) {
-              router.push("/dashboard");
+              const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+              router.push(isMobile ? "/home" : "/dashboard");
             }
           }
         }}

@@ -16,6 +16,7 @@ import {
   LogOut,
   ShieldCheck,
   ChevronRight,
+  ChevronLeft,
   AlertTriangle,
   RefreshCw,
   Search,
@@ -437,70 +438,120 @@ export default function SoftwareLayout({
 
       {/* 3. Main Content Container */}
       <div className="flex-1 flex flex-col md:pl-[240px] min-w-0 relative z-10">
-        {/* Top Header Bar matching redesigned mockup */}
-        <header className="h-[56px] bg-white/70 backdrop-blur-md border-b border-[#eeecf5] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-3">
-            {/* Mobile Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="md:hidden w-8 h-8 max-h-[34px] rounded-[6px] border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center cursor-pointer shrink-0"
-              aria-label="Open navigation menu"
-            >
-              <span className="text-[16px] leading-none">☰</span>
-            </button>
+        {/* Top Header Bar */}
+        <header className="h-[56px] bg-white/80 backdrop-blur-md border-b border-[#eeecf5] px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 select-none">
+          {/* MOBILE HEADER (md:hidden) */}
+          <div className="flex md:hidden items-center justify-between w-full">
+            {/* Left side: Back Button (if not on /home) + Logo */}
+            <div className="flex items-center gap-2 min-w-0">
+              {pathname !== "/home" && (
+                <Link
+                  href="/home"
+                  aria-label="Back to Home"
+                  className="h-[32px] max-h-[34px] px-2.5 rounded-[6px] bg-slate-100/90 hover:bg-slate-200 active:bg-slate-300 text-slate-800 flex items-center gap-1 text-[11.5px] font-medium border border-slate-200/90 transition-all shadow-2xs shrink-0 cursor-pointer"
+                >
+                  <ChevronLeft size={16} className="text-[#7c3aed] stroke-[2.5]" />
+                  <span>Back</span>
+                </Link>
+              )}
 
+              {/* Logo */}
+              <Link href="/home" className="flex items-center shrink-0">
+                <div className="relative h-[32px] max-w-[110px] flex items-center">
+                  {customLogoUrl ? (
+                    <img
+                      src={customLogoUrl}
+                      alt={authorizedUser?.name || "Logo"}
+                      className="max-h-[30px] max-w-[110px] object-contain"
+                    />
+                  ) : (
+                    <Image
+                      src="/grownext-logo.jpeg"
+                      alt="GrowNext"
+                      width={110}
+                      height={30}
+                      priority
+                      className="object-contain mix-blend-multiply max-h-[30px] w-auto"
+                    />
+                  )}
+                </div>
+              </Link>
+            </div>
+
+            {/* Right side: Login Details */}
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-1.5 pl-1.5 py-0.5 pr-1 bg-white rounded-[6px] border border-slate-200/80 shadow-2xs">
+                <div className="w-[26px] h-[26px] rounded-full bg-[#8b5cf6] text-white flex items-center justify-center text-[11px] font-medium shrink-0 shadow-2xs">
+                  {userInitial}
+                </div>
+                <span className="text-[11.5px] font-medium text-slate-800 leading-tight truncate max-w-[75px] xs:max-w-[100px]">
+                  {authorizedUser?.name?.split(" ")[0] || "User"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="Sign Out"
+                  className="w-[24px] h-[24px] max-h-[34px] rounded-[4px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <LogOut size={12} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* DESKTOP HEADER (hidden md:flex) */}
+          <div className="hidden md:flex items-center justify-between w-full">
             {/* Breadcrumbs matching image */}
             <div className="flex items-center gap-1.5 text-[12.5px]">
               <span className="text-slate-400">GrowNext</span>
               <span className="text-slate-300 font-light">&gt;</span>
               <span className="text-slate-800 font-medium">{pageTitle}</span>
             </div>
-          </div>
 
-          {/* Header Right Actions */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Global Search Bar with ⌘ K */}
-            <div className="relative hidden md:flex items-center w-[210px] lg:w-[240px] h-[34px] bg-[#fdfdff] hover:bg-white border border-[#e2e1ec] focus-within:border-[#7c3aed] focus-within:bg-white rounded-[6px] px-2.5 transition-all shadow-2xs">
-              <Search size={13} className="text-slate-400 shrink-0 mr-2" />
-              <input
-                type="text"
-                placeholder="Search anything..."
-                className="w-full bg-transparent text-[12px] text-slate-800 placeholder-slate-400 focus:outline-none"
-              />
-              <span className="text-[10px] text-slate-400 bg-[#f4f3f8] border border-slate-200/80 rounded-[3px] px-1 py-0.2 font-mono shrink-0 select-none">
-                ⌘ K
-              </span>
-            </div>
-
-            {/* Green Licensed Active Pill */}
-            <span className="hidden sm:flex text-[11px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-2.5 py-1 rounded-[6px] items-center gap-1.5 shadow-2xs select-none">
-              <ShieldCheck size={12} className="text-[#059669]" />
-              <span>Licensed Active</span>
-            </span>
-
-            {/* Notification Bell with Purple Dot */}
-            <button
-              type="button"
-              className="relative w-8 h-8 max-h-[34px] rounded-[6px] text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center cursor-pointer transition-colors"
-              title="Notifications"
-            >
-              <Bell size={16} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#7c3aed] ring-2 ring-white" />
-            </button>
-
-            {/* User Profile Avatar & Text */}
-            <div className="flex items-center gap-2 pl-1 border-l border-slate-200/60">
-              <div className="w-8 h-8 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center text-[12px] font-medium shadow-2xs shrink-0 select-none">
-                {userInitial}
+            {/* Header Right Actions */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Global Search Bar with ⌘ K */}
+              <div className="relative flex items-center w-[210px] lg:w-[240px] h-[34px] bg-[#fdfdff] hover:bg-white border border-[#e2e1ec] focus-within:border-[#7c3aed] focus-within:bg-white rounded-[6px] px-2.5 transition-all shadow-2xs">
+                <Search size={13} className="text-slate-400 shrink-0 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search anything..."
+                  className="w-full bg-transparent text-[12px] text-slate-800 placeholder-slate-400 focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-400 bg-[#f4f3f8] border border-slate-200/80 rounded-[3px] px-1 py-0.2 font-mono shrink-0 select-none">
+                  ⌘ K
+                </span>
               </div>
-              <div className="hidden lg:flex flex-col text-left">
-                <span className="text-[12px] font-medium text-slate-800 leading-tight truncate max-w-[140px]">
-                  {authorizedUser?.name || "DooNext Testing"}
-                </span>
-                <span className="text-[10px] text-slate-400 leading-tight truncate max-w-[140px]">
-                  {authorizedUser?.email || "official.doonext@gmail.com"}
-                </span>
+
+              {/* Green Licensed Active Pill */}
+              <span className="flex text-[11px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-2.5 py-1 rounded-[6px] items-center gap-1.5 shadow-2xs select-none">
+                <ShieldCheck size={12} className="text-[#059669]" />
+                <span>Licensed Active</span>
+              </span>
+
+              {/* Notification Bell with Purple Dot */}
+              <button
+                type="button"
+                className="relative w-8 h-8 max-h-[34px] rounded-[6px] text-slate-500 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center cursor-pointer transition-colors"
+                title="Notifications"
+              >
+                <Bell size={16} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#7c3aed] ring-2 ring-white" />
+              </button>
+
+              {/* User Profile Avatar & Text */}
+              <div className="flex items-center gap-2 pl-1 border-l border-slate-200/60">
+                <div className="w-8 h-8 rounded-full bg-[#8b5cf6] text-white flex items-center justify-center text-[12px] font-medium shadow-2xs shrink-0 select-none">
+                  {userInitial}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-[12px] font-medium text-slate-800 leading-tight truncate max-w-[140px]">
+                    {authorizedUser?.name || "DooNext Testing"}
+                  </span>
+                  <span className="text-[10px] text-slate-400 leading-tight truncate max-w-[140px]">
+                    {authorizedUser?.email || "official.doonext@gmail.com"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
