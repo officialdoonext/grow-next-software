@@ -7,6 +7,8 @@ export interface UserProfile {
   email: string;
   city: string;
   address: string;
+  businessName?: string;
+  logoUrl?: string;
   status: "active" | "inactive";
   expiryDate: string | null;
   role: "admin" | "staff";

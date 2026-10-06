@@ -8,6 +8,7 @@ import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
 import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import InlineAudioPlayer, { isAudioMedia, isImageMedia } from "@/components/InlineAudioPlayer";
 import { subscribeToUserCollection } from "@/lib/dataService";
+import { usePermissions } from "@/lib/permissions";
 import {
   UserPlus,
   Users2,
@@ -59,6 +60,7 @@ const AVAILABLE_COLUMNS = [
 ];
 
 export default function CustomersPage() {
+  const { canEdit, canView } = usePermissions("customers");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -154,6 +156,7 @@ export default function CustomersPage() {
 
   // Toggle boolean attribute directly in real time
   const handleToggleBooleanAttr = async (customerId: string, key: string, newValue: boolean) => {
+    if (!canEdit) return;
     try {
       setCustomers((prev) =>
         prev.map((c) =>
@@ -426,28 +429,31 @@ export default function CustomersPage() {
               <Eye size={15} />
             </button>
 
-            {/* Edit Customer Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setCustomerToEdit(item);
-                setIsModalOpen(true);
-              }}
-              title="Edit Customer"
-              className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              <Edit2 size={15} />
-            </button>
+            {/* Edit & Delete Buttons - Only visible if has Edit permissions */}
+            {canEdit && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerToEdit(item);
+                    setIsModalOpen(true);
+                  }}
+                  title="Edit Customer"
+                  className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  <Edit2 size={15} />
+                </button>
 
-            {/* Delete Customer Button */}
-            <button
-              type="button"
-              onClick={() => setCustomerToDelete(item)}
-              title="Delete Customer"
-              className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-            >
-              <Trash2 size={15} />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomerToDelete(item)}
+                  title="Delete Customer"
+                  className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </>
+            )}
           </div>
         );
       },
@@ -631,25 +637,29 @@ export default function CustomersPage() {
             >
               <Eye size={14} />
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setCustomerToEdit(item);
-                setIsModalOpen(true);
-              }}
-              className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
-              title="Edit customer"
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setCustomerToDelete(item)}
-              className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
-              title="Delete customer"
-            >
-              <Trash2 size={14} />
-            </button>
+            {canEdit && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomerToEdit(item);
+                    setIsModalOpen(true);
+                  }}
+                  className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
+                  title="Edit customer"
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomerToDelete(item)}
+                  className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+                  title="Delete customer"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -855,18 +865,20 @@ export default function CustomersPage() {
           )}
         </div>
 
-        {/* Add Customer Primary Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setCustomerToEdit(null);
-            setIsModalOpen(true);
-          }}
-          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus size={14} />
-          <span>Add Customer</span>
-        </button>
+        {/* Add Customer Primary Button - Hidden if View Only */}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => {
+              setCustomerToEdit(null);
+              setIsModalOpen(true);
+            }}
+            className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus size={14} />
+            <span>Add Customer</span>
+          </button>
+        )}
       </div>
     </>
   );

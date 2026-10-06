@@ -22,6 +22,7 @@ import {
   Search,
   Bell,
   ChevronsLeft,
+  Users,
 } from "lucide-react";
 
 interface SoftwareLayoutProps {
@@ -43,6 +44,8 @@ export default function SoftwareLayout({
   const [denialReason, setDenialReason] = useState<string | null>(null);
   const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isStaffUser, setIsStaffUser] = useState(false);
+  const [staffPermissions, setStaffPermissions] = useState<Record<string, string>>({});
 
   // Listen for real-time logo updates
   useEffect(() => {
@@ -97,6 +100,10 @@ export default function SoftwareLayout({
         }
 
         setAuthorizedUser(data.user);
+        if (data.isStaff) {
+          setIsStaffUser(true);
+          setStaffPermissions(data.permissions || {});
+        }
         if (data.user?.logoUrl) {
           setCustomLogoUrl(data.user.logoUrl);
           localStorage.setItem("grownext_user_logo", data.user.logoUrl);
@@ -141,6 +148,7 @@ export default function SoftwareLayout({
 
   const navItems = [
     {
+      key: "dashboard",
       label: "Dashboard",
       href: "/dashboard",
       icon: <LayoutDashboard size={15} />,
@@ -151,6 +159,7 @@ export default function SoftwareLayout({
       activeBorder: "#c7d2fe",
     },
     {
+      key: "leads",
       label: "Leads",
       href: "/leads",
       icon: <Users2 size={15} />,
@@ -161,6 +170,7 @@ export default function SoftwareLayout({
       activeBorder: "#ddd6fe",
     },
     {
+      key: "quotations",
       label: "Quotations",
       href: "/quotations",
       icon: <FileSpreadsheet size={15} />,
@@ -171,6 +181,7 @@ export default function SoftwareLayout({
       activeBorder: "#a7f3d0",
     },
     {
+      key: "customers",
       label: "Customers",
       href: "/customers",
       icon: <Building2 size={15} />,
@@ -181,6 +192,7 @@ export default function SoftwareLayout({
       activeBorder: "#bae6fd",
     },
     {
+      key: "invoices",
       label: "Invoices",
       href: "/invoices",
       icon: <Receipt size={15} />,
@@ -191,6 +203,18 @@ export default function SoftwareLayout({
       activeBorder: "#fde68a",
     },
     {
+      key: "staff",
+      label: "Staff",
+      href: "/staff",
+      icon: <Users size={15} />,
+      color: "#6366f1", // Indigo
+      iconBg: "#eef2ff",
+      activeBg: "#eef2ff",
+      activeText: "#4338ca",
+      activeBorder: "#c7d2fe",
+    },
+    {
+      key: "integrations",
       label: "Integrations",
       href: "/integrations",
       icon: <Layers size={15} />,
@@ -201,6 +225,7 @@ export default function SoftwareLayout({
       activeBorder: "#f5d0fe",
     },
     {
+      key: "custom_objects",
       label: "Custom Objects",
       href: "/custom-objects",
       icon: <Box size={15} />,
@@ -211,6 +236,7 @@ export default function SoftwareLayout({
       activeBorder: "#fecdd3",
     },
     {
+      key: "settings",
       label: "Settings",
       href: "/settings",
       icon: <Settings size={15} />,
@@ -222,9 +248,31 @@ export default function SoftwareLayout({
     },
   ];
 
-  const userInitial = authorizedUser?.name
-    ? authorizedUser.name.charAt(0).toUpperCase()
-    : "D";
+  // Filter nav items based on staff permissions
+  const visibleNavItems = navItems.filter((item) => {
+    if (!isStaffUser) return true;
+    const p = staffPermissions[item.key];
+    return p === "view" || p === "edit";
+  });
+
+  // Protect route if staff tries accessing an unpermitted page
+  useEffect(() => {
+    if (!loading && isStaffUser && pathname && pathname !== "/home") {
+      const currentItem = navItems.find(
+        (it) => pathname === it.href || pathname.startsWith(`${it.href}/`)
+      );
+      if (currentItem) {
+        const perm = staffPermissions[currentItem.key];
+        if (perm === "none" || !perm) {
+          const fallback = visibleNavItems[0]?.href || "/home";
+          router.replace(fallback);
+        }
+      }
+    }
+  }, [loading, isStaffUser, staffPermissions, pathname, router, visibleNavItems]);
+
+  const displayName = authorizedUser?.staffName || authorizedUser?.name || "DooNext";
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   if (loading) {
     return (
@@ -333,7 +381,7 @@ export default function SoftwareLayout({
 
         {/* Navigation Items - distinctly color-coded per menu */}
         <nav className="px-3 space-y-1">
-          {navItems.map((item) => {
+          {visibleNavItems.map((item) => {
             const isActive =
               pathname === item.href ||
               (item.href !== "/dashboard" && pathname.startsWith(`${item.href}/`)) ||
@@ -386,16 +434,25 @@ export default function SoftwareLayout({
         <div className="p-2.5 rounded-[6px] bg-white border border-slate-200/80 shadow-2xs">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[10.5px] font-normal text-slate-500">License Status</span>
-            <span className="text-[10px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-1.5 py-0.5 rounded-[4px] flex items-center gap-1">
-              <ShieldCheck size={11} />
-              Active
-            </span>
+            {isStaffUser ? (
+              <span className="text-[10px] font-medium text-[#4f46e5] bg-[#eef2ff] border border-[#c7d2fe] px-1.5 py-0.5 rounded-[4px] flex items-center gap-1">
+                <Users size={11} />
+                Staff Member
+              </span>
+            ) : (
+              <span className="text-[10px] font-medium text-[#059669] bg-[#ecfdf5] border border-[#d1fae5] px-1.5 py-0.5 rounded-[4px] flex items-center gap-1">
+                <ShieldCheck size={11} />
+                Active
+              </span>
+            )}
           </div>
           <div className="text-[12px] text-slate-800 truncate font-medium">
-            {authorizedUser?.name || "DooNext Testing"}
+            {authorizedUser?.staffName || authorizedUser?.name || "DooNext User"}
           </div>
           <div className="text-[10px] text-slate-400 truncate">
-            {authorizedUser?.email || "official.doonext@gmail.com"}
+            {isStaffUser
+              ? `Workspace: ${authorizedUser?.email || "Owner"}`
+              : (authorizedUser?.email || "official.doonext@gmail.com")}
           </div>
         </div>
 
@@ -485,7 +542,7 @@ export default function SoftwareLayout({
                   {userInitial}
                 </div>
                 <span className="text-[11.5px] font-medium text-slate-800 leading-tight truncate max-w-[75px] xs:max-w-[100px]">
-                  {authorizedUser?.name?.split(" ")[0] || "User"}
+                  {displayName.split(" ")[0]}
                 </span>
                 <button
                   type="button"
@@ -546,10 +603,12 @@ export default function SoftwareLayout({
                 </div>
                 <div className="flex flex-col text-left">
                   <span className="text-[12px] font-medium text-slate-800 leading-tight truncate max-w-[140px]">
-                    {authorizedUser?.name || "DooNext Testing"}
+                    {displayName}
                   </span>
                   <span className="text-[10px] text-slate-400 leading-tight truncate max-w-[140px]">
-                    {authorizedUser?.email || "official.doonext@gmail.com"}
+                    {isStaffUser
+                      ? `Staff Member`
+                      : (authorizedUser?.email || "official.doonext@gmail.com")}
                   </span>
                 </div>
               </div>

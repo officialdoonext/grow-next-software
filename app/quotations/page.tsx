@@ -10,6 +10,7 @@ import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
 import InlineAudioPlayer, { isAudioMedia, isImageMedia } from "@/components/InlineAudioPlayer";
 import { subscribeToUserCollection } from "@/lib/dataService";
+import { usePermissions } from "@/lib/permissions";
 import {
   FileSpreadsheet,
   Plus,
@@ -37,6 +38,7 @@ import {
 } from "lucide-react";
 
 export default function QuotationsPage() {
+  const { canEdit, canView } = usePermissions("quotations");
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -440,25 +442,29 @@ export default function QuotationsPage() {
           >
             <Eye size={13} />
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setQuotationToEdit(item);
-              setIsAddModalOpen(true);
-            }}
-            title="Edit Quotation"
-            className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <Edit3 size={13} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setQuotationToDelete(item)}
-            title="Delete Quotation"
-            className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
-          >
-            <Trash2 size={13} />
-          </button>
+          {canEdit && (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuotationToEdit(item);
+                  setIsAddModalOpen(true);
+                }}
+                title="Edit Quotation"
+                className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-[#6024a8] hover:bg-purple-50 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Edit3 size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuotationToDelete(item)}
+                title="Delete Quotation"
+                className="w-7 h-7 max-h-[34px] rounded-[6px] text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <Trash2 size={13} />
+              </button>
+            </>
+          )}
         </div>
       ),
     },
@@ -745,17 +751,19 @@ export default function QuotationsPage() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setQuotationToEdit(null);
-            setIsAddModalOpen(true);
-          }}
-          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus size={14} />
-          <span>Add Quotation</span>
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuotationToEdit(null);
+              setIsAddModalOpen(true);
+            }}
+            className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus size={14} />
+            <span>Add Quotation</span>
+          </button>
+        )}
       </div>
     </>
   );
@@ -838,17 +846,19 @@ export default function QuotationsPage() {
           emptyTitle="No Quotations Found"
           emptyDescription="Formal price estimates, customer proposals, and project quotations will appear here."
           emptyAction={
-            <button
-              type="button"
-              onClick={() => {
-                setQuotationToEdit(null);
-                setIsAddModalOpen(true);
-              }}
-              className="h-[34px] max-h-[34px] px-4 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer mx-auto"
-            >
-              <Plus size={13} />
-              <span>Create First Quotation</span>
-            </button>
+            canEdit ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuotationToEdit(null);
+                  setIsAddModalOpen(true);
+                }}
+                className="h-[34px] max-h-[34px] px-4 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer mx-auto"
+              >
+                <Plus size={13} />
+                <span>Create First Quotation</span>
+              </button>
+            ) : undefined
           }
         />
       </div>

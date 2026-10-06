@@ -17,6 +17,14 @@ import {
   ChevronRight,
   AlertCircle,
   Sparkles,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  Building2,
+  Briefcase,
+  ArrowLeft,
+  Users,
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -34,6 +42,13 @@ export default function LoginScreen() {
   const [staffId, setStaffId] = useState("");
   const [selectedStore, setSelectedStore] = useState("store-1");
   const [shiftDateTime, setShiftDateTime] = useState<Date | null>(new Date());
+
+  // Staff Login specific state
+  const [staffMobile, setStaffMobile] = useState("");
+  const [staffMpin, setStaffMpin] = useState("");
+  const [showStaffMpin, setShowStaffMpin] = useState(false);
+  const [staffProfiles, setStaffProfiles] = useState<any[] | null>(null);
+  const [isStaffSubmitting, setIsStaffSubmitting] = useState(false);
 
   // Loading & Error states
   const [isLoading, setIsLoading] = useState(false);
@@ -243,6 +258,59 @@ export default function LoginScreen() {
     setPendingUser(profile);
   };
 
+  const handleStaffLogin = async (e?: React.FormEvent, selectedStaffId?: string) => {
+    if (e) e.preventDefault();
+    setErrorMessage(null);
+    setInfoMessage(null);
+
+    const cleanMobile = staffMobile.replace(/[^0-9]/g, "").trim();
+    const cleanMpin = staffMpin.replace(/[^0-9]/g, "").trim();
+
+    if (cleanMobile.length < 10) {
+      setErrorMessage("Please enter a valid 10-digit mobile number.");
+      return;
+    }
+    if (cleanMpin.length < 4 || cleanMpin.length > 6) {
+      setErrorMessage("Please enter your 4 to 6 digit MPIN.");
+      return;
+    }
+
+    setIsStaffSubmitting(true);
+    try {
+      const res = await fetch("/api/auth/staff-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mobile: cleanMobile,
+          mpin: cleanMpin,
+          staffId: selectedStaffId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Staff login failed. Please check your credentials.");
+      }
+
+      // If multiple business profiles are detected for this phone number
+      if (data.multipleProfiles && Array.isArray(data.profiles)) {
+        setStaffProfiles(data.profiles);
+        return;
+      }
+
+      // Single profile authorized directly
+      if (data.staff?.ownerEmail) {
+        localStorage.setItem("grownext_user_email", data.staff.ownerEmail);
+      }
+      const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+      router.push(isMobile ? "/home" : (data.redirectUrl || "/dashboard"));
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to log in as staff.");
+    } finally {
+      setIsStaffSubmitting(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/session", {
@@ -431,6 +499,7 @@ export default function LoginScreen() {
               onClick={() => {
                 setActiveTab("admin");
                 setIsOtpSent(false);
+                setStaffProfiles(null);
                 setErrorMessage(null);
               }}
               className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all cursor-pointer ${
@@ -446,6 +515,7 @@ export default function LoginScreen() {
               onClick={() => {
                 setActiveTab("staff");
                 setIsOtpSent(false);
+                setStaffProfiles(null);
                 setErrorMessage(null);
               }}
               className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all cursor-pointer ${
@@ -590,55 +660,155 @@ export default function LoginScreen() {
                 )}
               </button>
             </form>
+          ) : staffProfiles && staffProfiles.length > 0 ? (
+            /* Multi-Profile Onboarding Selection Screen */
+            <div className="space-y-3.5 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setStaffProfiles(null)}
+                    className="w-7 h-7 max-h-[34px] rounded-[6px] hover:bg-slate-100 text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Back to login"
+                  >
+                    <ArrowLeft size={14} />
+                  </button>
+                  <div>
+                    <h3 className="text-[13px] font-medium text-slate-900 leading-tight">
+                      Select Workspace
+                    </h3>
+                    <p className="text-[10.5px] text-slate-500">
+                      Choose profile to enter
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-medium text-[#7c3aed] bg-[#f5edfd] border border-[#ddd6fe] px-2 py-0.5 rounded-[4px]">
+                  {staffProfiles.length} Workspaces
+                </span>
+              </div>
+
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-0.5">
+                {staffProfiles.map((prof: any) => (
+                  <div
+                    key={prof.staffId}
+                    className="p-3 rounded-[6px] border border-slate-200/90 bg-[#fbfbfe] hover:bg-white hover:border-[#7c3aed]/50 transition-all flex items-center justify-between gap-2.5 shadow-2xs group"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-[32px] h-[32px] rounded-[6px] bg-[#eef2ff] border border-[#c7d2fe] text-[#4f46e5] flex items-center justify-center font-medium text-[13px] shrink-0">
+                        {prof.businessName ? prof.businessName.charAt(0).toUpperCase() : "B"}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[12.5px] font-medium text-slate-900 truncate">
+                          {prof.businessName || "Business Workspace"}
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                          <span>Staff: {prof.staffName}</span>
+                          <span>•</span>
+                          <span className="text-[#059669]">
+                            {prof.allowedCount || 0} modules
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isStaffSubmitting}
+                      onClick={() => handleStaffLogin(undefined, prof.staffId)}
+                      className="h-[30px] max-h-[34px] px-3 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[11.5px] font-medium flex items-center gap-1 transition-all shadow-2xs shrink-0 cursor-pointer disabled:opacity-70"
+                    >
+                      {isStaffSubmitting ? (
+                        <RefreshCw size={12} className="animate-spin" />
+                      ) : (
+                        <>
+                          <span>Enter</span>
+                          <ArrowRight size={12} />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : (
-            /* Staff Login Form */
-            <form onSubmit={handleSendOtp} className="space-y-3.5">
+            /* Staff Mobile & MPIN Login Form */
+            <form onSubmit={handleStaffLogin} className="space-y-3.5 animate-in fade-in duration-200">
+              {/* Mobile Number Input */}
               <div>
                 <label
-                  htmlFor="staff-id-input"
+                  htmlFor="staff-mobile-input"
                   className="block text-[12.5px] font-medium text-slate-800 mb-1"
                 >
-                  Staff Member ID or Email
+                  Mobile Number
                 </label>
                 <div className="relative flex items-center">
-                  <User
+                  <Phone
                     size={15}
                     className="absolute left-2.5 text-slate-400 pointer-events-none"
                   />
                   <input
-                    id="staff-id-input"
-                    type="text"
-                    value={staffId}
-                    onChange={(e) => setStaffId(e.target.value)}
-                    placeholder="staff.member@yourbusiness.com"
+                    id="staff-mobile-input"
+                    type="tel"
+                    required
+                    maxLength={10}
+                    value={staffMobile}
+                    onChange={(e) => setStaffMobile(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="Enter 10-digit mobile number"
                     className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200/90 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-all font-normal"
                   />
                 </div>
+                <p className="text-[10.5px] text-slate-400 mt-1">
+                  Registered 10-digit mobile number.
+                </p>
               </div>
 
-              {/* Custom Searchable Dropdown */}
-              <CustomSearchDropdown
-                label="Assigned Business Branch"
-                options={storeOptions}
-                value={selectedStore}
-                onChange={setSelectedStore}
-                searchPlaceholder="Search branch or department..."
-              />
+              {/* MPIN Input */}
+              <div>
+                <label
+                  htmlFor="staff-mpin-input"
+                  className="block text-[12.5px] font-medium text-slate-800 mb-1"
+                >
+                  Security MPIN (4-6 Digits)
+                </label>
+                <div className="relative flex items-center">
+                  <Lock
+                    size={15}
+                    className="absolute left-2.5 text-slate-400 pointer-events-none"
+                  />
+                  <input
+                    id="staff-mpin-input"
+                    type={showStaffMpin ? "text" : "password"}
+                    required
+                    maxLength={6}
+                    value={staffMpin}
+                    onChange={(e) => setStaffMpin(e.target.value.replace(/[^0-9]/g, ""))}
+                    placeholder="Enter 4-6 digit MPIN"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-9 bg-[#f8fafc] border border-slate-200/90 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-all font-normal tracking-widest"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowStaffMpin(!showStaffMpin)}
+                    className="absolute right-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showStaffMpin ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
 
-              {/* Custom Date & Time Picker */}
-              <CustomDateTimePicker
-                label="Session Schedule & Time"
-                value={shiftDateTime}
-                onChange={setShiftDateTime}
-                placeholder="Pick shift schedule..."
-              />
-
+              {/* Action Button */}
               <button
                 type="submit"
-                className="w-full h-[34px] max-h-[34px] mt-2 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                disabled={isStaffSubmitting}
+                className="w-full h-[34px] max-h-[34px] mt-2 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-70"
               >
-                <span>Authorize Access</span>
-                <ArrowRight size={14} />
+                {isStaffSubmitting ? (
+                  <RefreshCw size={14} className="animate-spin" />
+                ) : (
+                  <>
+                    <span>Verify & Enter Workspace</span>
+                    <ArrowRight size={14} />
+                  </>
+                )}
               </button>
             </form>
           )}

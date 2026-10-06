@@ -13,9 +13,11 @@ import {
   Database,
   Settings,
   User,
+  UserCheck,
 } from "lucide-react";
 
 interface HomeMenuItem {
+  key: string;
   label: string;
   href: string;
   icon: React.ReactNode;
@@ -27,15 +29,32 @@ interface HomeMenuItem {
 
 export default function MobileHomePage() {
   const [userName, setUserName] = useState<string>("User");
+  const [staffPermissions, setStaffPermissions] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedEmail = localStorage.getItem("grownext_user_email");
+      const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
+      
+      fetch(`/api/auth/session${query}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.authenticated) {
+            if (data.isStaff) {
+              setStaffPermissions(data.permissions || {});
+              if (data.staffName) setUserName(data.staffName);
+            } else if (data.user?.name) {
+              setUserName(data.user.name);
+            }
+          }
+        })
+        .catch(() => {});
+
       if (savedEmail) {
         fetch(`/api/settings/profile?email=${encodeURIComponent(savedEmail)}`)
           .then((r) => r.json())
           .then((data) => {
-            if (data.success && data.profile?.name) {
+            if (data.success && data.profile?.name && !staffPermissions) {
               setUserName(data.profile.name);
             }
           })
@@ -44,8 +63,9 @@ export default function MobileHomePage() {
     }
   }, []);
 
-  const menuItems: HomeMenuItem[] = [
+  const rawMenuItems: HomeMenuItem[] = [
     {
+      key: "dashboard",
       label: "Dashboard",
       href: "/dashboard",
       icon: <LayoutGrid size={20} className="stroke-[2.2]" />,
@@ -55,6 +75,7 @@ export default function MobileHomePage() {
       glowBg: "bg-teal-100/40",
     },
     {
+      key: "leads",
       label: "Leads",
       href: "/leads",
       icon: <Users2 size={20} className="stroke-[2.2]" />,
@@ -64,6 +85,7 @@ export default function MobileHomePage() {
       glowBg: "bg-purple-100/40",
     },
     {
+      key: "customers",
       label: "Customers",
       href: "/customers",
       icon: <Users size={20} className="stroke-[2.2]" />,
@@ -73,6 +95,7 @@ export default function MobileHomePage() {
       glowBg: "bg-blue-100/40",
     },
     {
+      key: "quotations",
       label: "Quotations",
       href: "/quotations",
       icon: <FileSpreadsheet size={20} className="stroke-[2.2]" />,
@@ -82,6 +105,7 @@ export default function MobileHomePage() {
       glowBg: "bg-orange-100/40",
     },
     {
+      key: "invoices",
       label: "Invoices",
       href: "/invoices",
       icon: <Receipt size={20} className="stroke-[2.2]" />,
@@ -91,6 +115,17 @@ export default function MobileHomePage() {
       glowBg: "bg-amber-100/40",
     },
     {
+      key: "staff",
+      label: "Staff",
+      href: "/staff",
+      icon: <UserCheck size={20} className="stroke-[2.2]" />,
+      iconGradient: "bg-gradient-to-br from-[#4f46e5] to-[#6366f1]",
+      iconShadow: "shadow-indigo-500/25",
+      waveFill: "fill-indigo-100/60",
+      glowBg: "bg-indigo-100/40",
+    },
+    {
+      key: "integrations",
       label: "Integrations",
       href: "/integrations",
       icon: <Link2 size={20} className="stroke-[2.2]" />,
@@ -100,6 +135,7 @@ export default function MobileHomePage() {
       glowBg: "bg-emerald-100/40",
     },
     {
+      key: "custom_objects",
       label: "Custom Objects",
       href: "/custom-objects",
       icon: <Database size={20} className="stroke-[2.2]" />,
@@ -109,6 +145,7 @@ export default function MobileHomePage() {
       glowBg: "bg-violet-100/40",
     },
     {
+      key: "settings",
       label: "Settings",
       href: "/settings",
       icon: <Settings size={20} className="stroke-[2.2]" />,
@@ -118,6 +155,7 @@ export default function MobileHomePage() {
       glowBg: "bg-stone-100/40",
     },
     {
+      key: "profile",
       label: "Profile",
       href: "/settings",
       icon: <User size={20} className="stroke-[2.2]" />,
@@ -127,6 +165,13 @@ export default function MobileHomePage() {
       glowBg: "bg-pink-100/40",
     },
   ];
+
+  const menuItems = rawMenuItems.filter((item) => {
+    if (!staffPermissions) return true;
+    if (item.key === "profile") return true;
+    const perm = staffPermissions[item.key];
+    return perm === "view" || perm === "edit";
+  });
 
   return (
     <SoftwareLayout pageTitle="Home">

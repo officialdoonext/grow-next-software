@@ -33,15 +33,24 @@ export function verifyOtpHash(email: string, otp: string, expectedHash: string):
   return crypto.timingSafeEqual(buf1, buf2);
 }
 
-/**
- * Creates an encrypted/signed session token
- */
-export function createSessionToken(payload: {
+export interface SessionPayload {
   email: string;
   role: string;
   status: string;
   expiryDate: string | null;
-}): string {
+  isStaff?: boolean;
+  staffId?: string;
+  staffName?: string;
+  ownerEmail?: string;
+  permissions?: Record<string, string>;
+  iat?: number;
+  exp?: number;
+}
+
+/**
+ * Creates an encrypted/signed session token
+ */
+export function createSessionToken(payload: SessionPayload): string {
   const data = JSON.stringify({
     ...payload,
     iat: Date.now(),
@@ -71,14 +80,7 @@ export function createSessionToken(payload: {
  */
 export function verifySessionToken(token: string): {
   valid: boolean;
-  payload?: {
-    email: string;
-    role: string;
-    status: string;
-    expiryDate: string | null;
-    iat: number;
-    exp: number;
-  };
+  payload?: SessionPayload;
 } {
   try {
     const parts = token.split(".");

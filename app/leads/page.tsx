@@ -9,6 +9,7 @@ import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
 import DateRangeFilter, { DateFilterState, matchesDateFilter, getLocalTodayStr } from "@/components/DateRangeFilter";
 import InlineAudioPlayer, { isAudioMedia, isImageMedia } from "@/components/InlineAudioPlayer";
 import { subscribeToUserCollection } from "@/lib/dataService";
+import { usePermissions } from "@/lib/permissions";
 import {
   UserPlus,
   Users2,
@@ -58,6 +59,7 @@ const AVAILABLE_LEAD_COLUMNS = [
 ];
 
 export default function LeadsPage() {
+  const { canEdit, canView } = usePermissions("leads");
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,6 +161,7 @@ export default function LeadsPage() {
 
   // Toggle boolean attribute directly in real time
   const handleToggleBooleanAttr = async (leadId: string, key: string, newValue: boolean) => {
+    if (!canEdit) return;
     try {
       setLeads((prev) =>
         prev.map((l) =>
@@ -446,28 +449,31 @@ export default function LeadsPage() {
               <Eye size={15} />
             </button>
 
-            {/* Edit Lead Button */}
-            <button
-              type="button"
-              onClick={() => {
-                setLeadToEdit(item);
-                setIsModalOpen(true);
-              }}
-              title="Edit Lead"
-              className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              <Edit2 size={15} />
-            </button>
+            {/* Edit & Delete Buttons - Only visible if has Edit permissions */}
+            {canEdit && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadToEdit(item);
+                    setIsModalOpen(true);
+                  }}
+                  title="Edit Lead"
+                  className="text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  <Edit2 size={15} />
+                </button>
 
-            {/* Delete Lead Button */}
-            <button
-              type="button"
-              onClick={() => setLeadToDelete(item)}
-              title="Delete Lead"
-              className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-            >
-              <Trash2 size={15} />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setLeadToDelete(item)}
+                  title="Delete Lead"
+                  className="text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </>
+            )}
           </div>
         );
       },
@@ -659,25 +665,29 @@ export default function LeadsPage() {
             >
               <Eye size={14} />
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setLeadToEdit(item);
-                setIsModalOpen(true);
-              }}
-              className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
-              title="Edit lead"
-            >
-              <Edit2 size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setLeadToDelete(item)}
-              className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
-              title="Delete lead"
-            >
-              <Trash2 size={14} />
-            </button>
+            {canEdit && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLeadToEdit(item);
+                    setIsModalOpen(true);
+                  }}
+                  className="text-slate-400 hover:text-[#6024a8] p-1 cursor-pointer"
+                  title="Edit lead"
+                >
+                  <Edit2 size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLeadToDelete(item)}
+                  className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer"
+                  title="Delete lead"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -896,18 +906,20 @@ export default function LeadsPage() {
           )}
         </div>
 
-        {/* Add Lead Primary Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setLeadToEdit(null);
-            setIsModalOpen(true);
-          }}
-          className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
-        >
-          <Plus size={14} />
-          <span>Add Lead</span>
-        </button>
+        {/* Add Lead Primary Button - Hidden if View Only */}
+        {canEdit && (
+          <button
+            type="button"
+            onClick={() => {
+              setLeadToEdit(null);
+              setIsModalOpen(true);
+            }}
+            className="h-[34px] max-h-[34px] px-3.5 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer shrink-0"
+          >
+            <Plus size={14} />
+            <span>Add Lead</span>
+          </button>
+        )}
       </div>
     </>
   );

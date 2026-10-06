@@ -13,10 +13,21 @@ export async function GET(req: NextRequest) {
 
     let email = emailParam || clientUserCookie;
 
+    let isStaff = false;
+    let staffId = "";
+    let staffName = "";
+    let staffPermissions: Record<string, string> = {};
+
     if (cookieToken) {
       const verified = verifySessionToken(cookieToken);
       if (verified.valid && verified.payload?.email) {
-        email = verified.payload.email;
+        email = verified.payload.ownerEmail || verified.payload.email;
+        if (verified.payload.isStaff) {
+          isStaff = true;
+          staffId = verified.payload.staffId || "";
+          staffName = verified.payload.staffName || "";
+          staffPermissions = verified.payload.permissions || {};
+        }
       }
     }
 
@@ -28,7 +39,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Always fetch latest profile from database
+    // Always fetch latest business owner profile from database
     const profile = await getUserProfile(email);
 
     if (!profile) {
@@ -42,19 +53,40 @@ export async function GET(req: NextRequest) {
     // Check both conditions using central validator
     const { isApproved, reason } = validateUserApproval(profile);
 
+    const responseUser = {
+      ...profile,
+      ...(isStaff
+        ? {
+            isStaff: true,
+            staffId,
+            staffName,
+            name: staffName ? `${staffName} (Staff)` : profile.name,
+          }
+        : {}),
+    };
+
     const response = NextResponse.json({
       authenticated: true,
       isApproved,
-      user: profile,
+      user: responseUser,
+      isStaff,
+      staffId: isStaff ? staffId : undefined,
+      staffName: isStaff ? staffName : undefined,
+      permissions: isStaff ? staffPermissions : undefined,
       reason: !isApproved ? reason : undefined,
     });
 
     // Refresh 30-day cookies on every check to keep user logged in across reloads
     const sessionToken = createSessionToken({
       email: profile.email,
-      role: profile.role,
+      role: isStaff ? "staff" : profile.role,
       status: profile.status,
       expiryDate: profile.expiryDate,
+      isStaff,
+      staffId,
+      staffName,
+      ownerEmail: profile.email,
+      permissions: staffPermissions,
     });
 
     response.cookies.set("grownext_session", sessionToken, {
