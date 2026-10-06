@@ -52,18 +52,11 @@ export default function AccountPendingScreen({
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between items-center py-10 px-4 bg-[#fafafc] overflow-x-hidden">
-      {/* Background Soft Glow Accents */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-70"
-        style={{
-          backgroundImage: `
-            radial-gradient(ellipse 50% 50% at 8% 20%, rgba(96, 36, 168, 0.045) 0%, transparent 70%),
-            radial-gradient(ellipse 45% 45% at 92% 75%, rgba(13, 166, 120, 0.035) 0%, transparent 70%),
-            radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.9) 0%, transparent 100%)
-          `,
-        }}
-      />
+    <div className="relative min-h-screen w-full flex flex-col justify-between items-center py-10 px-4 bg-[#f8f9fd] overflow-x-hidden font-sans text-slate-800 antialiased">
+      {/* Ambient Decorative Gradient Blobs matching Redesigned Software Pages */}
+      <div className="fixed -top-28 -right-28 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-3xl pointer-events-none z-0" />
+      <div className="fixed top-0 right-0 w-[320px] h-[320px] rounded-bl-[140px] bg-gradient-to-b from-purple-100/35 to-transparent pointer-events-none z-0" />
+      <div className="fixed -bottom-28 -left-28 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-purple-200/35 via-rose-100/20 to-transparent blur-3xl pointer-events-none z-0" />
 
       <div className="relative z-10 w-full max-w-[420px] my-auto">
         {/* Logo Section */}
@@ -78,24 +71,28 @@ export default function AccountPendingScreen({
               className="object-contain mix-blend-multiply"
             />
           </div>
-          <div className="mt-2">
-            <span className="text-[11px] font-medium text-[#8c97a8] tracking-[0.22em] uppercase">
-              SMART RETAIL
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <span className="text-[10.5px] font-medium text-slate-400 tracking-[0.16em] uppercase">
+              Business Management Suite
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span className="text-[10px] font-medium text-[#7c3aed] bg-[#f5ecfc] border border-[#ede9fe] px-1.5 py-0.2 rounded-[4px]">
+              License Gateway
             </span>
           </div>
         </div>
 
-        {/* Main Status Card - strictly max 6px radius */}
-        <div className="w-full bg-white rounded-[6px] border border-[#edf0f5] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] p-6 transition-all">
+        {/* Main Status Card */}
+        <div className="w-full bg-white rounded-[8px] border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)] p-6 sm:p-7 transition-all">
           <div className="text-center mb-5">
-            <div className={`w-12 h-12 rounded-[6px] mx-auto mb-3 flex items-center justify-center shadow-xs ${
+            <div className={`w-12 h-12 rounded-[8px] mx-auto mb-3 flex items-center justify-center shadow-2xs ${
               isBothSatisfied
                 ? "bg-emerald-50 text-[#059669] border border-emerald-100"
                 : "bg-amber-50 text-amber-600 border border-amber-100"
             }`}>
               {isBothSatisfied ? <CheckCircle2 size={24} /> : <Clock size={24} />}
             </div>
-            <h2 className="text-[15.5px] font-medium text-slate-900">
+            <h2 className="text-[16px] font-medium text-slate-900 tracking-tight">
               {isBothSatisfied ? "Account Approved & Licensed" : "Account Activation Pending"}
             </h2>
             <p className="text-[12px] text-slate-500 mt-1">
@@ -151,12 +148,12 @@ export default function AccountPendingScreen({
               </span>
             </div>
 
-            <div className="pt-1 text-[11px] text-[#8893a7] leading-relaxed">
+            <div className="pt-1 text-[11px] text-slate-400 leading-relaxed font-normal">
               Software access is strictly guarded: both <strong>Active</strong> status and an <strong>unexpired license</strong> must be satisfied.
             </div>
           </div>
 
-          {/* Action Buttons - strictly max 34px height and max 6px radius */}
+          {/* Action Buttons */}
           <div className="space-y-2">
             {isBothSatisfied ? (
               <button
@@ -165,7 +162,7 @@ export default function AccountPendingScreen({
                   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
                   router.push(isMobile ? "/home" : "/dashboard");
                 }}
-                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <span>Enter GrowNext Software →</span>
               </button>
@@ -173,7 +170,7 @@ export default function AccountPendingScreen({
               <button
                 type="button"
                 onClick={onRefresh}
-                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
                 <RefreshCw size={13} />
                 <span>Recheck License Status</span>
@@ -183,7 +180,7 @@ export default function AccountPendingScreen({
             <button
               type="button"
               onClick={onLogout}
-              className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-white border border-slate-200/90 hover:bg-slate-50 text-slate-700 text-[12px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <LogOut size={13} />
               <span>Sign Out</span>
@@ -193,10 +190,10 @@ export default function AccountPendingScreen({
 
         {/* Security & Support footer notice */}
         <div className="mt-4 text-center">
-          <p className="text-[10.5px] text-[#94a3b8] leading-tight">
+          <p className="text-[10.5px] text-slate-400 leading-tight">
             Restricted Access for Authorized Personnel Only.
           </p>
-          <p className="text-[10.5px] text-[#94a3b8] leading-tight mt-0.5">
+          <p className="text-[10.5px] text-slate-400 leading-tight mt-0.5">
             Need license activation? Contact support@grownext.com
           </p>
         </div>

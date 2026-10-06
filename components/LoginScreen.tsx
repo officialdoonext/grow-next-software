@@ -378,28 +378,21 @@ export default function LoginScreen() {
   ];
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col justify-between items-center py-10 px-4 bg-[#fafafc] overflow-x-hidden">
-      {/* Background Soft Glow Accents */}
-      <div
-        className="pointer-events-none fixed inset-0 z-0 opacity-70"
-        style={{
-          backgroundImage: `
-            radial-gradient(ellipse 50% 50% at 8% 20%, rgba(96, 36, 168, 0.045) 0%, transparent 70%),
-            radial-gradient(ellipse 45% 45% at 92% 75%, rgba(13, 166, 120, 0.035) 0%, transparent 70%),
-            radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.9) 0%, transparent 100%)
-          `,
-        }}
-      />
+    <div className="relative min-h-screen w-full flex flex-col justify-between items-center py-10 px-4 bg-[#f8f9fd] overflow-x-hidden font-sans text-slate-800 antialiased">
+      {/* Ambient Decorative Gradient Blobs matching Redesigned Software Pages */}
+      <div className="fixed -top-28 -right-28 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-purple-200/40 via-purple-100/20 to-transparent blur-3xl pointer-events-none z-0" />
+      <div className="fixed top-0 right-0 w-[320px] h-[320px] rounded-bl-[140px] bg-gradient-to-b from-purple-100/35 to-transparent pointer-events-none z-0" />
+      <div className="fixed -bottom-28 -left-28 w-[450px] h-[450px] rounded-full bg-gradient-to-tr from-purple-200/35 via-rose-100/20 to-transparent blur-3xl pointer-events-none z-0" />
 
       {/* Top right drawer trigger to view/test custom components */}
       <div className="fixed top-4 right-4 z-40">
         <button
           type="button"
           onClick={() => setIsDrawerOpen(true)}
-          className="h-[32px] max-h-[34px] px-3 bg-white/90 backdrop-blur-xs border border-slate-200 hover:border-slate-300 text-slate-700 text-[12px] font-medium rounded-[6px] flex items-center gap-1.5 shadow-xs transition-colors"
+          className="h-[32px] max-h-[34px] px-3 bg-white/90 backdrop-blur-xs border border-slate-200/90 hover:border-slate-300 text-slate-700 text-[12px] font-medium rounded-[6px] flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
         >
-          <Sliders size={13} className="text-[#6024a8]" />
-          <span>Interactive Components</span>
+          <Sliders size={13} className="text-[#7c3aed]" />
+          <span>Components Sandbox</span>
           <ChevronRight size={13} className="text-slate-400" />
         </button>
       </div>
@@ -418,17 +411,21 @@ export default function LoginScreen() {
               className="object-contain mix-blend-multiply"
             />
           </div>
-          <div className="mt-2">
-            <span className="text-[11px] font-medium text-[#8c97a8] tracking-[0.22em] uppercase">
-              SMART RETAIL
+          <div className="mt-2.5 flex items-center gap-1.5">
+            <span className="text-[10.5px] font-medium text-slate-400 tracking-[0.16em] uppercase">
+              Business Management Suite
+            </span>
+            <span className="w-1 h-1 rounded-full bg-slate-300" />
+            <span className="text-[10px] font-medium text-[#7c3aed] bg-[#f5ecfc] border border-[#ede9fe] px-1.5 py-0.2 rounded-[4px]">
+              Cloud Gateway
             </span>
           </div>
         </div>
 
         {/* Card 1: Main Login Card */}
-        <div className="w-full max-w-[392px] bg-white rounded-[6px] border border-[#edf0f5] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.05),0_1px_3px_rgba(0,0,0,0.02)] p-6 transition-all duration-200">
+        <div className="w-full max-w-[400px] bg-white rounded-[8px] border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_1px_3px_rgba(0,0,0,0.02)] p-6 sm:p-7 transition-all duration-200">
           {/* Top Switcher Tabs */}
-          <div className="w-full h-[34px] max-h-[34px] bg-[#f0f2f6] p-[3px] rounded-[6px] flex items-center gap-1 mb-5">
+          <div className="w-full h-[34px] max-h-[34px] bg-[#f1f3f9] p-[3px] rounded-[6px] flex items-center gap-1 mb-5">
             <button
               type="button"
               onClick={() => {
@@ -436,9 +433,9 @@ export default function LoginScreen() {
                 setIsOtpSent(false);
                 setErrorMessage(null);
               }}
-              className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all ${
+              className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all cursor-pointer ${
                 activeTab === "admin"
-                  ? "bg-white text-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-700 bg-transparent"
               }`}
             >
@@ -451,9 +448,9 @@ export default function LoginScreen() {
                 setIsOtpSent(false);
                 setErrorMessage(null);
               }}
-              className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all ${
+              className={`flex-1 h-[28px] max-h-[34px] rounded-[5px] text-[12.5px] font-medium flex items-center justify-center transition-all cursor-pointer ${
                 activeTab === "staff"
-                  ? "bg-white text-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.06)]"
+                  ? "bg-white text-slate-900 shadow-2xs"
                   : "text-slate-500 hover:text-slate-700 bg-transparent"
               }`}
             >
@@ -479,15 +476,15 @@ export default function LoginScreen() {
                 <button
                   type="button"
                   onClick={() => setIsOtpSent(false)}
-                  className="text-[11.5px] font-medium text-[#6024a8] hover:underline"
+                  className="text-[11.5px] font-medium text-[#7c3aed] hover:underline cursor-pointer"
                 >
                   Change Email
                 </button>
               </div>
 
-              <p className="text-[11.5px] text-[#8893a7] mb-4">
+              <p className="text-[11.5px] text-slate-500 mb-4 font-normal">
                 Enter the 6-digit code sent to{" "}
-                <span className="text-slate-700 font-medium">
+                <span className="text-slate-800 font-medium">
                   {adminEmail || "admin@yourbusiness.com"}
                 </span>
               </p>
@@ -506,7 +503,7 @@ export default function LoginScreen() {
                     value={digit}
                     onChange={(e) => handleOtpChange(idx, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    className="w-full h-[34px] max-h-[34px] rounded-[6px] border border-slate-200 bg-[#f8fafc] text-center text-[15px] font-medium text-slate-800 focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all"
+                    className="w-full h-[34px] max-h-[34px] rounded-[6px] border border-slate-200 bg-[#f8fafc] text-center text-[15px] font-medium text-slate-800 focus:bg-white focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-all"
                   />
                 ))}
               </div>
@@ -522,7 +519,7 @@ export default function LoginScreen() {
                   <button
                     type="button"
                     onClick={handleSendOtp}
-                    className="text-[#6024a8] hover:underline font-medium flex items-center gap-1"
+                    className="text-[#7c3aed] hover:underline font-medium flex items-center gap-1 cursor-pointer"
                   >
                     <RefreshCw size={11} /> Resend Code
                   </button>
@@ -533,7 +530,7 @@ export default function LoginScreen() {
               <button
                 type="submit"
                 disabled={isVerifying}
-                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] active:bg-[#45167e] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-70"
+                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-70"
               >
                 {isVerifying ? (
                   <RefreshCw size={14} className="animate-spin" />
@@ -546,7 +543,7 @@ export default function LoginScreen() {
               </button>
             </form>
           ) : activeTab === "admin" ? (
-            /* Admin Login Form - EXACT match to screenshot */
+            /* Admin Login Form */
             <form onSubmit={handleSendOtp}>
               <label
                 htmlFor="admin-email-input"
@@ -559,7 +556,7 @@ export default function LoginScreen() {
               <div className="relative flex items-center">
                 <Mail
                   size={15}
-                  className="absolute left-2.5 text-[#94a3b8] pointer-events-none"
+                  className="absolute left-2.5 text-slate-400 pointer-events-none"
                 />
                 <input
                   id="admin-email-input"
@@ -568,12 +565,12 @@ export default function LoginScreen() {
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                   placeholder="admin@yourbusiness.com"
-                  className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[13px] text-slate-800 placeholder-[#94a3b8] focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                  className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200/90 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-all font-normal"
                 />
               </div>
 
               {/* Helper text */}
-              <p className="text-[11.5px] text-[#8893a7] mt-1.5 mb-5 font-normal">
+              <p className="text-[11.5px] text-slate-500 mt-1.5 mb-5 font-normal">
                 We will send a one-time 6-digit verification code to this inbox.
               </p>
 
@@ -581,13 +578,13 @@ export default function LoginScreen() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] active:bg-[#45167e] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-70"
+                className="w-full h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-70"
               >
                 {isLoading ? (
                   <span>Generating Code...</span>
                 ) : (
                   <>
-                    <span>Send OTP Code</span>
+                    <span>Send Verification Code</span>
                     <ArrowRight size={14} />
                   </>
                 )}
@@ -606,31 +603,31 @@ export default function LoginScreen() {
                 <div className="relative flex items-center">
                   <User
                     size={15}
-                    className="absolute left-2.5 text-[#94a3b8] pointer-events-none"
+                    className="absolute left-2.5 text-slate-400 pointer-events-none"
                   />
                   <input
                     id="staff-id-input"
                     type="text"
                     value={staffId}
                     onChange={(e) => setStaffId(e.target.value)}
-                    placeholder="cashier.sarah@retailnext.com"
-                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200 rounded-[6px] text-[13px] text-slate-800 placeholder-[#94a3b8] focus:bg-white focus:outline-none focus:border-[#6024a8] focus:ring-2 focus:ring-[#6024a8]/10 transition-all font-normal"
+                    placeholder="staff.member@yourbusiness.com"
+                    className="w-full h-[34px] max-h-[34px] pl-8 pr-3 bg-[#f8fafc] border border-slate-200/90 rounded-[6px] text-[12.5px] text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-[#7c3aed] focus:ring-2 focus:ring-[#7c3aed]/10 transition-all font-normal"
                   />
                 </div>
               </div>
 
               {/* Custom Searchable Dropdown */}
               <CustomSearchDropdown
-                label="Assigned Store / Terminal"
+                label="Assigned Business Branch"
                 options={storeOptions}
                 value={selectedStore}
                 onChange={setSelectedStore}
-                searchPlaceholder="Search store branch or terminal..."
+                searchPlaceholder="Search branch or department..."
               />
 
               {/* Custom Date & Time Picker */}
               <CustomDateTimePicker
-                label="Session Shift Schedule & Time"
+                label="Session Schedule & Time"
                 value={shiftDateTime}
                 onChange={setShiftDateTime}
                 placeholder="Pick shift schedule..."
@@ -638,9 +635,9 @@ export default function LoginScreen() {
 
               <button
                 type="submit"
-                className="w-full h-[34px] max-h-[34px] mt-2 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] active:bg-[#45167e] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                className="w-full h-[34px] max-h-[34px] mt-2 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] active:bg-[#5b21b6] text-white text-[12.5px] font-medium flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
               >
-                <span>Authorize Terminal Access</span>
+                <span>Authorize Access</span>
                 <ArrowRight size={14} />
               </button>
             </form>
@@ -648,20 +645,20 @@ export default function LoginScreen() {
 
           {/* Security & Monitoring footer notice */}
           <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-            <p className="text-[10.5px] text-[#94a3b8] leading-tight font-normal">
+            <p className="text-[10.5px] text-slate-400 leading-tight font-normal">
               Restricted Access for Authorized Personnel Only.
             </p>
-            <p className="text-[10.5px] text-[#94a3b8] leading-tight font-normal mt-0.5">
-              Unauthorized access attempts are monitored and logged.
+            <p className="text-[10.5px] text-slate-400 leading-tight font-normal mt-0.5">
+              Multi-tenant isolated & encrypted session gateway.
             </p>
           </div>
         </div>
 
         {/* Card 2: PWA Install App Card */}
-        <div className="w-full max-w-[392px] bg-white rounded-[6px] border border-[#edf0f5] shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-3 px-4 mt-3.5 transition-all duration-200">
+        <div className="w-full max-w-[400px] bg-white rounded-[8px] border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-3 px-4 mt-3.5 transition-all duration-200">
           <div className="flex items-center gap-3">
             {/* Square Purple Icon */}
-            <div className="w-[34px] h-[34px] max-h-[34px] rounded-[6px] bg-[#6024a8] text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-[34px] h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-xs">
               <Download size={16} strokeWidth={2} />
             </div>
 
@@ -675,8 +672,8 @@ export default function LoginScreen() {
                   PWA
                 </span>
               </div>
-              <p className="text-[11px] text-[#8893a7] font-normal truncate mt-0.5">
-                Install for faster access & auto updates
+              <p className="text-[11px] text-slate-500 font-normal truncate mt-0.5">
+                Install for quick launch & offline caching
               </p>
             </div>
           </div>
@@ -777,13 +774,13 @@ export default function LoginScreen() {
                 <div className="font-medium text-slate-800">Verified Rule Constraints:</div>
                 <div className="flex items-center justify-between">
                   <span>Input / Button / Dropdown max height:</span>
-                  <span className="font-medium text-[#6024a8] bg-purple-50 px-1.5 py-0.5 rounded-[4px]">
+                  <span className="font-medium text-[#7c3aed] bg-purple-50 px-1.5 py-0.5 rounded-[4px]">
                     34px
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Border radius everywhere:</span>
-                  <span className="font-medium text-[#6024a8] bg-purple-50 px-1.5 py-0.5 rounded-[4px]">
+                  <span className="font-medium text-[#7c3aed] bg-purple-50 px-1.5 py-0.5 rounded-[4px]">
                     ≤ 6px
                   </span>
                 </div>
@@ -805,7 +802,7 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
-              className="w-full h-[34px] max-h-[34px] mt-4 rounded-[6px] bg-[#6024a8] hover:bg-[#501b91] text-white text-[12px] font-medium transition-colors"
+              className="w-full h-[34px] max-h-[34px] mt-4 rounded-[6px] bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-[12px] font-medium transition-colors cursor-pointer"
             >
               Return to Login Screen
             </button>
@@ -816,7 +813,7 @@ export default function LoginScreen() {
       {/* Footer */}
       <footer className="relative z-10 text-center py-2">
         <span className="text-[11px] text-slate-400 font-normal">
-          © {new Date().getFullYear()} GrowNext • Smart Retail System
+          © {new Date().getFullYear()} GrowNext • Enterprise Business Management Platform
         </span>
       </footer>
     </div>
