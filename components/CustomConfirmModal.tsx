@@ -29,7 +29,7 @@ export default function CustomConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
       <div className="relative w-full max-w-[390px] bg-white rounded-[6px] border border-slate-200 shadow-2xl p-5 animate-in zoom-in-95 duration-150">
         {/* Header with Alert Icon */}
         <div className="flex items-start gap-3 mb-3">

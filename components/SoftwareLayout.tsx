@@ -437,7 +437,7 @@ export default function SoftwareLayout({
       )}
 
       {/* 3. Main Content Container */}
-      <div className="flex-1 flex flex-col md:pl-[240px] min-w-0 relative z-10">
+      <div className="flex-1 flex flex-col md:pl-[240px] min-w-0">
         {/* Top Header Bar */}
         <header className="h-[56px] bg-white/80 backdrop-blur-md border-b border-[#eeecf5] px-3.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 select-none">
           {/* MOBILE HEADER (md:hidden) */}

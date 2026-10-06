@@ -222,7 +222,7 @@ export default function AddCustomerModal({
     : "max-w-[420px]";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
       <div
         className={`relative w-full ${modalWidthClass} max-h-[90vh] overflow-y-auto bg-white rounded-[6px] border border-slate-200 shadow-2xl p-6 animate-in zoom-in-95 duration-150`}
       >
@@ -366,7 +366,14 @@ export default function AddCustomerModal({
                   const currentValue = customValues[attr.key] ?? "";
 
                   return (
-                    <div key={attr.key}>
+                    <div
+                      key={attr.key}
+                      className={
+                        (attr.dataType === "Image" || attr.dataType === "Audio") && isLargeModal
+                          ? "sm:col-span-2 space-y-1"
+                          : "space-y-1"
+                      }
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-[12px] font-medium text-slate-700">
                           {attr.name} {attr.mandatory && <span className="text-rose-500">*</span>}

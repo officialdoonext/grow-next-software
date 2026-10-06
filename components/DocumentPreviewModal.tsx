@@ -141,8 +141,8 @@ export default function DocumentPreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="relative w-full max-w-[760px] bg-white rounded-[8px] border border-slate-200 shadow-2xl overflow-hidden my-auto animate-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="relative w-full max-w-[760px] bg-white rounded-[6px] border border-slate-200 shadow-2xl overflow-hidden my-auto animate-in zoom-in-95 duration-150">
         {/* Top Control Bar (Hidden on print) */}
         <div className="flex items-center justify-between px-5 py-3 bg-[#f8fafc] border-b border-slate-200 print:hidden">
           <div className="flex items-center gap-2">

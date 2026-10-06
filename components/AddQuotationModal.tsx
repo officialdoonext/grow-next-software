@@ -386,8 +386,8 @@ export default function AddQuotationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
-      <div className="relative w-full max-w-[700px] bg-white rounded-[8px] border border-slate-200 shadow-2xl p-5 sm:p-6 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto my-auto">
+    <div className="fixed inset-0 z-[9000] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div className="relative w-full max-w-[700px] bg-white rounded-[6px] border border-slate-200 shadow-2xl p-5 sm:p-6 animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto my-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
           <div>

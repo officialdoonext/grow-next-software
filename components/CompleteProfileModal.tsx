@@ -66,7 +66,7 @@ export default function CompleteProfileModal({
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150 font-sans">
-      <div className="relative w-full max-w-[430px] bg-white rounded-[8px] border border-slate-200/90 shadow-2xl p-6 sm:p-7 animate-in zoom-in-95 duration-150 overflow-hidden">
+      <div className="relative w-full max-w-[430px] bg-white rounded-[6px] border border-slate-200/90 shadow-2xl p-6 sm:p-7 animate-in zoom-in-95 duration-150 overflow-hidden">
         {/* Ambient Top-Right Soft Glow */}
         <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-gradient-to-br from-purple-200/50 via-purple-100/25 to-transparent blur-2xl pointer-events-none" />
 
