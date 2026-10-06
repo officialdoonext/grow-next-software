@@ -247,7 +247,7 @@ export default function SettingsPage() {
 
   return (
     <SoftwareLayout pageTitle="Settings">
-      <div className="space-y-4 max-w-4xl mx-auto">
+      <div className="space-y-4 mx-auto">
         {/* Page Title & Subtitle matching redesign mockup */}
         <div>
           <h1 className="text-[26px] font-medium text-slate-900 tracking-tight">

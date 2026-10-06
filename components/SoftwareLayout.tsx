@@ -139,14 +139,86 @@ export default function SoftwareLayout({
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={15} /> },
-    { label: "Leads", href: "/leads", icon: <Users2 size={15} /> },
-    { label: "Quotations", href: "/quotations", icon: <FileSpreadsheet size={15} /> },
-    { label: "Customers", href: "/customers", icon: <Building2 size={15} /> },
-    { label: "Invoices", href: "/invoices", icon: <Receipt size={15} /> },
-    { label: "Integrations", href: "/integrations", icon: <Layers size={15} /> },
-    { label: "Custom Objects", href: "/custom-objects", icon: <Box size={15} /> },
-    { label: "Settings", href: "/settings", icon: <Settings size={15} /> },
+    {
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: <LayoutDashboard size={15} />,
+      color: "#4f46e5", // Indigo
+      iconBg: "#eef2ff",
+      activeBg: "#eef2ff",
+      activeText: "#4338ca",
+      activeBorder: "#c7d2fe",
+    },
+    {
+      label: "Leads",
+      href: "/leads",
+      icon: <Users2 size={15} />,
+      color: "#7c3aed", // Violet / Purple
+      iconBg: "#f5edfd",
+      activeBg: "#f5edfd",
+      activeText: "#6d28d9",
+      activeBorder: "#ddd6fe",
+    },
+    {
+      label: "Quotations",
+      href: "/quotations",
+      icon: <FileSpreadsheet size={15} />,
+      color: "#059669", // Emerald
+      iconBg: "#ecfdf5",
+      activeBg: "#ecfdf5",
+      activeText: "#047857",
+      activeBorder: "#a7f3d0",
+    },
+    {
+      label: "Customers",
+      href: "/customers",
+      icon: <Building2 size={15} />,
+      color: "#0284c7", // Sky Blue
+      iconBg: "#f0f9ff",
+      activeBg: "#f0f9ff",
+      activeText: "#0369a1",
+      activeBorder: "#bae6fd",
+    },
+    {
+      label: "Invoices",
+      href: "/invoices",
+      icon: <Receipt size={15} />,
+      color: "#d97706", // Amber
+      iconBg: "#fffbeb",
+      activeBg: "#fffbeb",
+      activeText: "#b45309",
+      activeBorder: "#fde68a",
+    },
+    {
+      label: "Integrations",
+      href: "/integrations",
+      icon: <Layers size={15} />,
+      color: "#c026d3", // Fuchsia
+      iconBg: "#fdf4ff",
+      activeBg: "#fdf4ff",
+      activeText: "#a21caf",
+      activeBorder: "#f5d0fe",
+    },
+    {
+      label: "Custom Objects",
+      href: "/custom-objects",
+      icon: <Box size={15} />,
+      color: "#e11d48", // Rose
+      iconBg: "#fff1f2",
+      activeBg: "#fff1f2",
+      activeText: "#be123c",
+      activeBorder: "#fecdd3",
+    },
+    {
+      label: "Settings",
+      href: "/settings",
+      icon: <Settings size={15} />,
+      color: "#0d9488", // Teal
+      iconBg: "#f0fdfa",
+      activeBg: "#f0fdfa",
+      activeText: "#0f766e",
+      activeBorder: "#99f6e4",
+    },
   ];
 
   const userInitial = authorizedUser?.name
@@ -258,7 +330,7 @@ export default function SoftwareLayout({
           </span>
         </div>
 
-        {/* Navigation Items - exactly styled to mockup with active dot */}
+        {/* Navigation Items - distinctly color-coded per menu */}
         <nav className="px-3 space-y-1">
           {navItems.map((item) => {
             const isActive =
@@ -271,18 +343,36 @@ export default function SoftwareLayout({
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`w-full h-[34px] max-h-[34px] px-3 rounded-[6px] text-[12.5px] font-medium flex items-center gap-2.5 transition-all ${
+                style={
                   isActive
-                    ? "bg-[#f5ecfc] text-[#7026b9] font-medium"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal"
+                    ? {
+                        backgroundColor: item.activeBg,
+                        color: item.activeText,
+                        borderColor: item.activeBorder,
+                      }
+                    : undefined
+                }
+                className={`w-full h-[34px] max-h-[34px] px-2.5 rounded-[6px] text-[12.5px] flex items-center gap-2.5 transition-all border ${
+                  isActive
+                    ? "font-medium shadow-2xs"
+                    : "border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-normal"
                 }`}
               >
-                <span className={`shrink-0 ${isActive ? "text-[#7026b9]" : "text-slate-400"}`}>
+                <span
+                  style={{
+                    backgroundColor: isActive ? "white" : item.iconBg,
+                    color: item.color,
+                  }}
+                  className="w-[22px] h-[22px] rounded-[5px] flex items-center justify-center shrink-0 shadow-2xs transition-colors"
+                >
                   {item.icon}
                 </span>
                 <span className="truncate">{item.label}</span>
                 {isActive && (
-                  <span className="ml-auto w-2 h-2 rounded-full bg-[#7026b9] shrink-0" />
+                  <span
+                    style={{ backgroundColor: item.color }}
+                    className="ml-auto w-2 h-2 rounded-full shrink-0 shadow-2xs"
+                  />
                 )}
               </Link>
             );
