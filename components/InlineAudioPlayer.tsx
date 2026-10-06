@@ -260,9 +260,9 @@ export default function InlineAudioPlayer({
               {label}
             </span>
           )}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="text-[11.5px] font-medium text-slate-800 truncate block max-w-[170px] sm:max-w-[260px]"
+              className="text-[11.5px] font-medium text-slate-800 truncate block min-w-0 flex-1"
               title={fileName}
             >
               {fileName}

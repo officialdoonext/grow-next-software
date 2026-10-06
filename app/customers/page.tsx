@@ -504,14 +504,46 @@ export default function CustomersPage() {
               const isBool = typeof v === "boolean" || v === "true" || v === "false";
               const boolVal = v === true || v === "true";
 
-              return (
-                <div
-                  key={k}
-                  className="p-2.5 bg-[#f8fafc] rounded-[6px] border border-slate-100 flex items-center justify-between"
-                >
-                  <span className="text-[11.5px] text-slate-600 capitalize">{displayKey}</span>
-                  {isBool ? (
-                    <div className="flex items-center gap-1.5">
+              const strVal = String(v || "");
+              const isAudio = isAudioMedia(k, v);
+              const isImage = isImageMedia(strVal);
+
+              // 1. Audio Media: Clean full-width audio recording banner
+              if (isAudio) {
+                return (
+                  <div key={k} className="col-span-2 sm:col-span-3 w-full min-w-0">
+                    <InlineAudioPlayer
+                      url={strVal}
+                      label={displayKey}
+                      entityType="customers"
+                      entityId={item.id}
+                      attributeKey={k}
+                      onDeleted={() => {
+                        setCustomers((prev) =>
+                          prev.map((c) => {
+                            if (c.id === item.id) {
+                              const nextAttrs = { ...(c.customAttributes || {}) };
+                              delete nextAttrs[k];
+                              return { ...c, customAttributes: nextAttrs };
+                            }
+                            return c;
+                          })
+                        );
+                      }}
+                    />
+                  </div>
+                );
+              }
+
+              // 2. Boolean Switch Attribute
+              if (isBool) {
+                return (
+                  <div
+                    key={k}
+                    className="p-2.5 bg-[#f8fafc] rounded-[6px] border border-slate-100 flex items-center justify-between"
+                  >
+                    <span className="text-[11.5px] text-slate-600 capitalize truncate mr-2">{displayKey}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         role="switch"
@@ -532,55 +564,39 @@ export default function CustomersPage() {
                         {boolVal ? "ON" : "OFF"}
                       </span>
                     </div>
-                  ) : (() => {
-                    const strVal = String(v || "");
-                    const isAudio = isAudioMedia(k, v);
-                    const isImage = isImageMedia(strVal);
+                  </div>
+                );
+              }
 
-                    if (isAudio) {
-                      return (
-                        <div key={k} className="col-span-2 sm:col-span-3 -my-0.5">
-                          <InlineAudioPlayer
-                            url={strVal}
-                            label={displayKey}
-                            entityType="customers"
-                            entityId={item.id}
-                            attributeKey={k}
-                            onDeleted={() => {
-                              setCustomers((prev) =>
-                                prev.map((c) => {
-                                  if (c.id === item.id) {
-                                    const nextAttrs = { ...(c.customAttributes || {}) };
-                                    delete nextAttrs[k];
-                                    return { ...c, customAttributes: nextAttrs };
-                                  }
-                                  return c;
-                                })
-                              );
-                            }}
-                          />
-                        </div>
-                      );
-                    }
+              // 3. Image Media Attribute
+              if (isImage) {
+                return (
+                  <div
+                    key={k}
+                    className="p-2.5 bg-[#f8fafc] rounded-[6px] border border-slate-100 flex items-center justify-between"
+                  >
+                    <span className="text-[11.5px] text-slate-600 capitalize truncate mr-2">{displayKey}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <img src={strVal} alt={displayKey} className="w-6 h-6 rounded-[3px] object-cover border border-purple-200" />
+                      <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#7c3aed] hover:underline flex items-center gap-0.5 font-medium">
+                        <span>View</span>
+                        <ExternalLink size={9} />
+                      </a>
+                    </div>
+                  </div>
+                );
+              }
 
-                    if (isImage) {
-                      return (
-                        <div className="flex items-center gap-1.5">
-                          <img src={strVal} alt={displayKey} className="w-6 h-6 rounded-[3px] object-cover border border-purple-200" />
-                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#7c3aed] hover:underline flex items-center gap-0.5 font-medium">
-                            <span>View</span>
-                            <ExternalLink size={9} />
-                          </a>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <span className="text-[11.5px] font-medium text-slate-800">
-                        {v !== undefined && v !== null && v !== "" ? String(v) : "—"}
-                      </span>
-                    );
-                  })()}
+              // 4. Standard Text / Number Attribute
+              return (
+                <div
+                  key={k}
+                  className="p-2.5 bg-[#f8fafc] rounded-[6px] border border-slate-100 flex items-center justify-between"
+                >
+                  <span className="text-[11.5px] text-slate-600 capitalize truncate mr-2">{displayKey}</span>
+                  <span className="text-[11.5px] font-medium text-slate-800 truncate">
+                    {strVal || "—"}
+                  </span>
                 </div>
               );
             })}
