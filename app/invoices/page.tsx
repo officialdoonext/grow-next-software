@@ -8,6 +8,7 @@ import DateRangeFilter, { DateFilterState, matchesDateFilter, getLocalTodayStr }
 import AddInvoiceModal, { Invoice } from "@/components/AddInvoiceModal";
 import DocumentPreviewModal from "@/components/DocumentPreviewModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
+import InlineAudioPlayer, { isAudioMedia, isImageMedia } from "@/components/InlineAudioPlayer";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
   Receipt,
@@ -562,8 +563,34 @@ export default function InvoicesPage() {
             {Object.entries(item.customAttributes).map(([k, v]) => {
               const displayKey = k.replace(/_/g, " ");
               const strVal = String(v || "");
-              const isMedia = strVal.startsWith("http://") || strVal.startsWith("https://");
-              const isImage = isMedia && (strVal.match(/\.(jpeg|jpg|gif|png|webp)/i) || strVal.includes("imagekit.io") || strVal.includes("cloudinary.com"));
+              const isAudio = isAudioMedia(k, v);
+              const isImage = isImageMedia(strVal);
+
+              if (isAudio) {
+                return (
+                  <div key={k} className="col-span-1 sm:col-span-2 md:col-span-3">
+                    <InlineAudioPlayer
+                      url={strVal}
+                      label={displayKey}
+                      entityType="invoices"
+                      entityId={item.id}
+                      attributeKey={k}
+                      onDeleted={() => {
+                        setInvoices((prev) =>
+                          prev.map((inv) => {
+                            if (inv.id === item.id) {
+                              const nextAttrs = { ...(inv.customAttributes || {}) };
+                              delete nextAttrs[k];
+                              return { ...inv, customAttributes: nextAttrs };
+                            }
+                            return inv;
+                          })
+                        );
+                      }}
+                    />
+                  </div>
+                );
+              }
 
               return (
                 <div
@@ -588,19 +615,6 @@ export default function InvoicesPage() {
                       >
                         <ExternalLink size={10} />
                         <span>Open full resolution</span>
-                      </a>
-                    </div>
-                  ) : isMedia ? (
-                    <div className="space-y-1 pt-0.5">
-                      <audio controls src={strVal} className="w-full h-7" />
-                      <a
-                        href={strVal}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[10.5px] text-[#6024a8] hover:underline flex items-center gap-1 font-medium"
-                      >
-                        <ExternalLink size={10} />
-                        <span>Open media file</span>
                       </a>
                     </div>
                   ) : (

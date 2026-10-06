@@ -6,6 +6,7 @@ import AddCustomerModal from "@/components/AddCustomerModal";
 import CustomConfirmModal from "@/components/CustomConfirmModal";
 import ResponsiveDataList, { ColumnDef } from "@/components/ResponsiveDataList";
 import StatCardGrid, { StatCardItem } from "@/components/StatCardGrid";
+import InlineAudioPlayer, { isAudioMedia, isImageMedia } from "@/components/InlineAudioPlayer";
 import { subscribeToUserCollection } from "@/lib/dataService";
 import {
   UserPlus,
@@ -332,8 +333,18 @@ export default function CustomersPage() {
               }
 
               const strVal = String(v || "");
-              const isMedia = strVal.startsWith("http://") || strVal.startsWith("https://");
-              const isImage = isMedia && (strVal.match(/\.(jpeg|jpg|gif|png|webp)/i) || strVal.includes("imagekit.io") || strVal.includes("cloudinary.com"));
+              const isAudio = isAudioMedia(k, v);
+              const isImage = isImageMedia(strVal);
+
+              if (isAudio) {
+                return (
+                  <InlineAudioPlayer
+                    key={k}
+                    url={strVal}
+                    compact={true}
+                  />
+                );
+              }
 
               if (isImage) {
                 return (
@@ -347,23 +358,6 @@ export default function CustomersPage() {
                     title={`View ${displayKey}`}
                   >
                     <img src={strVal} alt={displayKey} className="w-4 h-4 rounded-[2px] object-cover shrink-0" />
-                    <span className="capitalize max-w-[65px] truncate">{displayKey}</span>
-                  </a>
-                );
-              }
-
-              if (isMedia) {
-                return (
-                  <a
-                    key={k}
-                    href={strVal}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-[4px] bg-purple-50 text-[#6024a8] border border-purple-200 text-[10.5px] hover:bg-purple-100 transition-colors shrink-0"
-                    title={`Open ${displayKey}`}
-                  >
-                    <Music size={11} className="shrink-0" />
                     <span className="capitalize max-w-[65px] truncate">{displayKey}</span>
                   </a>
                 );
@@ -540,31 +534,47 @@ export default function CustomersPage() {
                     </div>
                   ) : (() => {
                     const strVal = String(v || "");
-                    const isMedia = strVal.startsWith("http://") || strVal.startsWith("https://");
-                    const isImage = isMedia && (strVal.match(/\.(jpeg|jpg|gif|png|webp)/i) || strVal.includes("imagekit.io") || strVal.includes("cloudinary.com"));
+                    const isAudio = isAudioMedia(k, v);
+                    const isImage = isImageMedia(strVal);
+
+                    if (isAudio) {
+                      return (
+                        <div key={k} className="col-span-2 sm:col-span-3 -my-0.5">
+                          <InlineAudioPlayer
+                            url={strVal}
+                            label={displayKey}
+                            entityType="customers"
+                            entityId={item.id}
+                            attributeKey={k}
+                            onDeleted={() => {
+                              setCustomers((prev) =>
+                                prev.map((c) => {
+                                  if (c.id === item.id) {
+                                    const nextAttrs = { ...(c.customAttributes || {}) };
+                                    delete nextAttrs[k];
+                                    return { ...c, customAttributes: nextAttrs };
+                                  }
+                                  return c;
+                                })
+                              );
+                            }}
+                          />
+                        </div>
+                      );
+                    }
 
                     if (isImage) {
                       return (
                         <div className="flex items-center gap-1.5">
                           <img src={strVal} alt={displayKey} className="w-6 h-6 rounded-[3px] object-cover border border-purple-200" />
-                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#6024a8] hover:underline flex items-center gap-0.5">
+                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#7c3aed] hover:underline flex items-center gap-0.5 font-medium">
                             <span>View</span>
                             <ExternalLink size={9} />
                           </a>
                         </div>
                       );
                     }
-                    if (isMedia) {
-                      return (
-                        <div className="flex items-center gap-1">
-                          <Music size={12} className="text-[#6024a8]" />
-                          <a href={strVal} target="_blank" rel="noreferrer" className="text-[11px] text-[#6024a8] hover:underline flex items-center gap-0.5">
-                            <span>Play</span>
-                            <ExternalLink size={9} />
-                          </a>
-                        </div>
-                      );
-                    }
+
                     return (
                       <span className="text-[11.5px] font-medium text-slate-800">
                         {v !== undefined && v !== null && v !== "" ? String(v) : "—"}

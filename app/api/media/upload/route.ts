@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: true,
         url: ikResult.url,
+        fileId: ikResult.fileId,
         provider: "imagekit",
         fileName: ikResult.name || cleanFileName,
       });

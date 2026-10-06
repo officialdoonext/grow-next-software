@@ -76,6 +76,7 @@ export default function MediaUploadInput({
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
+    const currentUrl = value;
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -83,6 +84,21 @@ export default function MediaUploadInput({
     onChange("");
     setError(null);
     setProviderUsed(null);
+
+    // Delete from ImageKit / cloud storage in background
+    if (currentUrl && (currentUrl.includes("imagekit.io") || currentUrl.includes("cloudinary.com"))) {
+      try {
+        const savedEmail = typeof window !== "undefined" ? localStorage.getItem("grownext_user_email") : null;
+        const query = savedEmail ? `?email=${encodeURIComponent(savedEmail)}` : "";
+        fetch(`/api/media/delete${query}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileUrl: currentUrl }),
+        }).catch((err) => console.warn("Media cleanup error:", err));
+      } catch {
+        // non-blocking
+      }
+    }
   };
 
   const togglePlay = (e: React.MouseEvent) => {
