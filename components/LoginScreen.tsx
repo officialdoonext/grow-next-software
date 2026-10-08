@@ -65,15 +65,51 @@ export default function LoginScreen() {
   const [pendingUser, setPendingUser] = useState<any | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
-  // PWA modal state
+  // PWA modal state & install prompt
   const [isPwaModalOpen, setIsPwaModalOpen] = useState(false);
   const [isPwaInstalled, setIsPwaInstalled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIosDevice, setIsIosDevice] = useState(false);
 
   // Showcase drawer state
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // Detect PWA install state and capture beforeinstallprompt event
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    if (isStandalone) {
+      setIsPwaInstalled(true);
+    }
+
+    const isIos =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIosDevice(isIos);
+
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handleInstalled = () => {
+      setIsPwaInstalled(true);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, []);
 
   // Check existing session on load
   useEffect(() => {
@@ -444,6 +480,30 @@ export default function LoginScreen() {
       ),
     },
   ];
+
+  const handleInstallClick = async () => {
+    if (isPwaInstalled) {
+      setIsPwaModalOpen(true);
+      return;
+    }
+
+    if (deferredPrompt) {
+      try {
+        deferredPrompt.prompt();
+        const choiceResult = await deferredPrompt.userChoice;
+        if (choiceResult?.outcome === "accepted") {
+          setIsPwaInstalled(true);
+          setDeferredPrompt(null);
+          setIsPwaModalOpen(false);
+        }
+      } catch (err) {
+        console.error("Install prompt error:", err);
+        setIsPwaModalOpen(true);
+      }
+    } else {
+      setIsPwaModalOpen(true);
+    }
+  };
 
   return (
     <div className="relative min-h-screen w-full flex flex-col justify-between items-center py-10 px-4 bg-[#f8f9fd] overflow-x-hidden font-sans text-slate-800 antialiased">
@@ -827,9 +887,16 @@ export default function LoginScreen() {
         {/* Card 2: PWA Install App Card */}
         <div className="w-full max-w-[400px] bg-white rounded-[8px] border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.02)] p-3 px-4 mt-3.5 transition-all duration-200">
           <div className="flex items-center gap-3">
-            {/* Square Purple Icon */}
-            <div className="w-[34px] h-[34px] max-h-[34px] rounded-[6px] bg-[#7c3aed] text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Download size={16} strokeWidth={2} />
+            {/* App Icon using /app-icon.PNG */}
+            <div className="w-[34px] h-[34px] max-h-[34px] rounded-[6px] border border-slate-200/90 bg-white p-0.5 shrink-0 shadow-2xs overflow-hidden flex items-center justify-center">
+              <Image
+                src="/app-icon.PNG"
+                alt="GrowNext App"
+                width={34}
+                height={34}
+                priority
+                className="w-full h-full object-cover rounded-[5px]"
+              />
             </div>
 
             {/* Title and Subtitle */}
@@ -838,12 +905,18 @@ export default function LoginScreen() {
                 <span className="text-[12.5px] font-medium text-slate-800 truncate">
                   Install GrowNext App
                 </span>
-                <span className="text-[10px] font-medium text-[#7c3aed] bg-[#f3e8ff] px-1.5 py-0.2 rounded-[4px] shrink-0">
-                  PWA
+                <span className={`text-[10px] font-medium px-1.5 py-0.2 rounded-[4px] shrink-0 ${
+                  isPwaInstalled
+                    ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                    : "text-[#7c3aed] bg-[#f3e8ff]"
+                }`}>
+                  {isPwaInstalled ? "Installed" : "PWA"}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-normal truncate mt-0.5">
-                Install for quick launch & offline caching
+                {isPwaInstalled
+                  ? "App installed • Ready for quick launch"
+                  : "Install for quick launch & offline caching"}
               </p>
             </div>
           </div>
@@ -852,11 +925,24 @@ export default function LoginScreen() {
           <div className="flex justify-center mt-2.5">
             <button
               type="button"
-              onClick={() => setIsPwaModalOpen(true)}
-              className="h-[32px] max-h-[34px] px-3.5 bg-white border border-slate-200 hover:border-slate-300 hover:bg-[#f8fafc] text-slate-700 text-[12px] font-medium rounded-[6px] flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+              onClick={handleInstallClick}
+              className={`h-[32px] max-h-[34px] px-3.5 border text-[12px] font-medium rounded-[6px] flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
+                isPwaInstalled
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100/70"
+                  : "bg-white border-slate-200 hover:border-slate-300 hover:bg-[#f8fafc] text-slate-700"
+              }`}
             >
-              <span>Install App</span>
-              <ArrowDown size={13} className="text-slate-600" />
+              {isPwaInstalled ? (
+                <>
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  <span>App Installed</span>
+                </>
+              ) : (
+                <>
+                  <span>Install App</span>
+                  <ArrowDown size={13} className="text-slate-600" />
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -873,11 +959,10 @@ export default function LoginScreen() {
       <PwaInstallModal
         isOpen={isPwaModalOpen}
         onClose={() => setIsPwaModalOpen(false)}
-        onInstall={() => {
-          setIsPwaInstalled(true);
-          setTimeout(() => setIsPwaModalOpen(false), 900);
-        }}
+        onInstall={handleInstallClick}
         isInstalled={isPwaInstalled}
+        canPrompt={!!deferredPrompt}
+        isIos={isIosDevice}
       />
 
       {/* Side Slide-out Drawer: Component Showcase */}
